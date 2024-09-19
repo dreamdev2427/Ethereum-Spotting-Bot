@@ -1,0 +1,43 @@
+{
+  "name": "chainsend-spotting-bot",
+  "version": "0.0.1",
+  "description": "Spots tokens in the memepool , checks the contract and provides information to the investor.",
+  "main": "bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon bot.js",
+    "start": "node bot.js"
+  },
+  "keywords": [
+    "Ethereum",
+    "Solidity",
+    "Mempool",
+    "ERC20",
+    "token",
+    "coin",
+    "uniswap",
+    "safety",
+    "spot"
+  ],
+  "author": "Li Yong",
+  "license": "ISC",
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
+  "dependencies": {
+    "@uniswap/sdk-core": "^5.4.0",
+    "@uniswap/v2-sdk": "^4.4.1",
+    "@uniswap/v3-sdk": "^3.14.0",
+    "abi-decoder": "^2.4.0",
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "ethereumjs-util": "^7.1.5",
+    "ethers": "^6.13.2",
+    "is-empty": "^1.2.0",
+    "mongoose": "^8.6.3",
+    "node-telegram-bot-api": "^0.66.0",
+    "set-interval-async": "^3.0.3",
+    "web3": "1.8"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.6"
+  }
+}

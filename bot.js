@@ -7,6 +7,7 @@ const Web3 = require("web3");
 const { ethers, JsonRpcProvider, toBeArray } = require('ethers');
 var abiDecoder = require("abi-decoder");
 const axios = require("axios");
+const BigNumber = require("bignumber.js");
 
 const db = require("./db");
 const MonitoringToken = db.mornitoringToken;
@@ -25,6 +26,7 @@ const pinksaleLockerAbi = require("./abis/pinksaleLocker.json");
 const metadropFactoryAbi = require("./abis/erc20FactoryByMetadroper.json");
 const uniswapv2PariAbi = require("./abis/uniswapv2pair.json");
 const isEmpty = require('is-empty');
+const { generateTokenAlertMessage } = require('./generateTokenAlertMessage');
 
 const DEPLOYED_TIME_OF_UNISWAPV2_FACTORY = new Date(1588610042 * 1000);
 const METADROP_ERC20_FACTORY_ADDRESS = "0x8cDD488363dE72635b55BB263cc4C29041e6aa1a";
@@ -100,23 +102,23 @@ bot.on('message', (msg) => {
 
 
 async function getChatId() {
-  try {
-      const response = await axios.get(`https://api.telegram.org/bot${token}/getUpdates`);
-      if (response.data && response.data.result.length > 0) {
-        console.log("result data :", response.data?.result );
+	try {
+		const response = await axios.get(`https://api.telegram.org/bot${token}/getUpdates`);
+		if (response.data && response.data.result.length > 0) {
+			console.log("result data :", response.data?.result);
 
-        console.log("result length:", response.data?.result?.length );
+			console.log("result length:", response.data?.result?.length);
 
 
-        console.log("result[0]:", response.data.result[0] );
-        console.log("result[1]:", response.data.result[1] );
+			console.log("result[0]:", response.data.result[0]);
+			console.log("result[1]:", response.data.result[1]);
 
-      } else {
-          console.log("No messages found in updates.");
-      }
-  } catch (error) {
-      console.error("Error getting updates:", error);
-  }
+		} else {
+			console.log("No messages found in updates.");
+		}
+	} catch (error) {
+		console.error("Error getting updates:", error);
+	}
 }
 
 
@@ -239,7 +241,6 @@ async function getFirstIncomingETHTransaction(developerWalletAddress) {
 		const response = await axios.get(url);
 		const transactions = response?.data?.result || [];
 
-		console.log("transactions : ", transactions);
 		if (isEmpty(transactions) === true) return null;
 
 		const incomingETHTransactions = transactions.filter(tx =>
@@ -297,13 +298,13 @@ const getLpAddresses = async (tokenAddress) => {
 			lpAddresses.push(lpv2);
 			let lpContract = new ethers.Contract(lpv2, erc20Abi, ethersProvider);
 			let totalSupply = await lpContract.totalSupply();
-			totalSupply = ethers.formatEther(totalSupply?.toString(), "ether");
+			totalSupply = ethers.formatEther(totalSupply?.toString());
 			let newMLP = new MonitoringLp({
 				lpToken: lpv2,
 				dexName: "UniswapV2",
 				tokenA: tokenAddress,
 				tokenB: WETH_ADDRESS,
-				totalSupply
+				totalSupply: Number(totalSupply?.toString())
 			});
 			try {
 				const doc = await newMLP.save();
@@ -334,7 +335,8 @@ const updateLPFieldsByPendingAL = async (pendingAl, lpAddress) => {
 		let currentLpETHs = FoundToken["lpETHAmounts"] || [];
 		currentLpETHs = [...currentLpETHs, {
 			address: lpAddress,
-			amount: pendingAl.lpETHAmount
+			amount: pendingAl.lpETHAmount,
+			tokenAmount: pendingAl.lpTokenAmount
 		}];
 		updatingFields = {
 			...updatingFields,
@@ -342,12 +344,12 @@ const updateLPFieldsByPendingAL = async (pendingAl, lpAddress) => {
 		}
 		MonitoringToken.findByIdAndUpdate(FoundToken._id, {
 			...updatingFields
-		}).then( (data) => {
-			console.log(data);			
+		}).then((data) => {
+			console.log(data);
 		}).catch((error => {
 			console.error(error);
 		}));
-	}else {								
+	} else {
 		// //add this token to DB
 		fillBasicInforOfToken(pendingAl.tokenAddress, {
 			lpAdded: true,
@@ -355,7 +357,8 @@ const updateLPFieldsByPendingAL = async (pendingAl, lpAddress) => {
 			lpETHAmounts: [
 				{
 					address: lpAddress,
-					amount: pendingAl.lpETHAmount
+					amount: pendingAl.lpETHAmount,
+					tokenAmount: pendingAl.lpTokenAmount
 				}
 			]
 		});
@@ -392,8 +395,8 @@ const fillBasicInforOfToken = async (tokenAddress, updatingFields = {}) => {
 			tokenAddress
 		);
 		console.log("checkresult : ", checkresult);
-		let firstFundingInfo = isEmpty(checkresult?.deployer)? { fundingAmount: 0, fundingFrom: ZERO_ADDRESS} : await getFirstIncomingETHTransaction(checkresult.deployer);
-		let deployerBalance = isEmpty(checkresult?.deployer)? 0: await ethersProvider.getBalance(checkresult.deployer);
+		let firstFundingInfo = isEmpty(checkresult?.deployer) ? { fundingAmount: 0, fundingFrom: ZERO_ADDRESS } : await getFirstIncomingETHTransaction(checkresult.deployer);
+		let deployerBalance = isEmpty(checkresult?.deployer) ? 0 : await ethersProvider.getBalance(checkresult.deployer);
 		deployerBalance = ethers.formatEther(deployerBalance?.toString());
 		console.log("deployerBalance : ", deployerBalance);
 		let lpAddresses = await getLpAddresses(tokenAddress);
@@ -490,66 +493,89 @@ const readListOfPairCreationEvents = async () => {
 }
 
 const analyzePair = async (pairOne) => {
-	try{
-		if ( isEmpty( pairsOnAnalyze.get(pairOne._id.toString()) ) ) return;
+	try {
+		if (isEmpty(pairsOnAnalyze.get(pairOne._id.toString()))) return;
 
 		console.log("analyzePair(), pairOne : ", pairOne);
 
-		const tokenDoc = await MonitoringToken.findOne({ address: new RegExp('^' + pairOne.tokenA + '$', 'i') });
+		let tokenDoc = await MonitoringToken.findOne({ address: new RegExp('^' + pairOne.tokenA + '$', 'i') });
 		//add code for analyze token and pair at here
+		/* Reading LP lock, burn status  */
+		const pairContract = new ethers.Contract(pairOne?.lpToken, erc20Abi, ethersProvider);
+		const burnBalance = await pairContract.balanceOf(DEAD_ADDRESS);
+		const deployerBalance = await pairContract.balanceOf(tokenDoc?.deployer);
+		const lpTotalSupply = await pairContract.totalSupply();
 
-		
-		//finally after the end of analyzing, print result to Telegram
-		delete tokenDoc._id;
-		delete tokenDoc.createdAt;
-		delete tokenDoc.updatedAt;
-		delete tokenDoc["__v"];
-		bot.sendMessage(botChatId, JSON.stringify(tokenDoc, null, 2) );			
-		
+		let status = '';
+		try {
+			const burnPercentage = (new BigNumber(burnBalance?.toString())).div(new BigNumber(lpTotalSupply?.toString())).mul(100);
+			const deployerPercentage = (new BigNumber(deployerBalance?.toString())).div(new BigNumber(lpTotalSupply?.toString())).mul(100);
+
+			// Construct the LP status
+			if (burnPercentage === 100) {
+				status = `Burnt (100% LP tokens burnt)`;
+			} else if (Number(burnPercentage?.toString()) > 0 && Number(burnPercentage?.toString()) < 100) {
+				status = `Burnt ${Number(burnPercentage?.toString()).toFixed(2)}% LP tokens`;
+			}
+			if (deployerPercentage > 0) {
+				status += `
+			Deployer holds ${Number(deployerPercentage?.toString()).toFixed(2)}% of LP tokens`;
+			}
+			if (burnPercentage == 0) {
+				status = `No significant burning detected.`;
+			}
+		} catch (err) {
+			console.log(err);
+		}
+
+		console.log("Burn or lock status : ", status);
+
+		//finally after the end of analyzing, print result to Telegram		
+		const reportMessage = await generateTokenAlertMessage(tokenDoc, pairOne);
+		bot.sendMessage(botChatId, reportMessage);
+
 		//update flag of LP so that this is not analyzed again
-		await MonitoringLp.findByIdAndUpdate(pairOne._id, {analyzed: true});				
+		await MonitoringLp.findByIdAndUpdate(pairOne._id, { analyzed: true });
 		pairsOnAnalyze.delete(pairOne._id.toString());
 
-	}catch(err){
+	} catch (err) {
 		console.log(err);
 	}
 }
 
 const analyzeLPs = async () => {
-	try{
-		const notAnalyzedBots = await MonitoringLp.find({analyzed : false });
+	try {
+		const notAnalyzedBots = await MonitoringLp.find({ analyzed: false });
 		if (isEmpty(notAnalyzedBots)) {
 			return;
 		}
-		
+
 		for (let index = 0; index < notAnalyzedBots.length; index++) {
 			const pairOne = notAnalyzedBots[index];
 
 			if (isEmpty(pairOne)) {
-			continue;
+				continue;
 			}
 
 			const tokenDoc = await MonitoringToken.findOne({ address: new RegExp('^' + pairOne.tokenA + '$', 'i') });
-			
-			if(isEmpty(tokenDoc)) continue;
+
+			if (isEmpty(tokenDoc)) continue;
 
 			if (pairsOnAnalyze.get(pairOne._id.toString())) continue;
 
 			pairsOnAnalyze.set(pairOne._id.toString(), true);
 
 			analyzePair(pairOne);
-			
+
 		}
 
-	}catch(err){
+	} catch (err) {
 		console.log(err);
 	}
 }
 
 const lpFinder = async () => {
 	try {
-
-		console.log("...")
 
 		analyzeLPs();
 
@@ -571,7 +597,7 @@ const lpFinder = async () => {
 							try {
 								const doc = await newMLP.save()
 								console.log(doc);
-							} catch (err) { }							
+							} catch (err) { }
 							updateLPFieldsByPendingAL(pendingAlV2, lpAddressV2);
 							pendingAddLiquidityV2 = pendingAddLiquidityV2.filter(txItem => txItem.hash !== pendingAlV2.hash);
 						}
@@ -596,23 +622,23 @@ const lpFinder = async () => {
 
 						let data = parseTx(tx["input"]);
 
-						// console.log("Pending transaction data:", data);
-
 						let methode = data[0];
 						let params = data[1];
 
 						if (methode === "addLiquidityETH") {
 
-							console.log("Found an addLiquidityETH transaction:", tx);
+							console.log("Found an addLiquidityETH transaction:", data);
 
 							const tokenAddress = params[0].value;
+							const amountTokenDesired = params[1].value;
 							const amountETHMin = params[3].value;
 
 							pendingAddLiquidityV2.push(
 								{
 									tokenAddress: tokenAddress,
 									hash: tx?.hash,
-									lpETHAmount: ethers.formatEther(amountETHMin.toString()).toString()
+									lpETHAmount: ethers.formatEther(amountETHMin.toString()).toString(),
+									lpTokenAmount: amountTokenDesired?.toString()
 								});
 
 						}
@@ -623,7 +649,7 @@ const lpFinder = async () => {
 		} catch (err) {
 			console.error("Error fetching pending block:", err);
 		}
-		
+
 	} catch (err) {
 		console.log(err);
 	}

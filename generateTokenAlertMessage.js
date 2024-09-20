@@ -46,7 +46,7 @@ async function getTokenTaxesEth(tokenAddress) {
         let sellTaxText = await page.evaluate(element => element.textContent, sellTaxElement);
 
         if (/^\d+(\.\d+)?%$/.test(buyTaxText.trim()) && /^\d+(\.\d+)?%$/.test(sellTaxText.trim())) {
-            Logging.info(`buy tax: ${buyTaxText.trim()} sell tax: ${sellTaxText.trim()}`)
+            console.log(`buy tax: ${buyTaxText.trim()} sell tax: ${sellTaxText.trim()}`);
 
             response.buy = buyTaxText.trim()
             response.sell = sellTaxText.trim()

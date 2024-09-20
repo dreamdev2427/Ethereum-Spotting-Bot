@@ -76,7 +76,7 @@ abiDecoder.addABI(uniswapv2PariAbi);
 const token = process.env.TELEGRAM_BOT_TOKEN; // Replace with your own bot token
 const bot = new TelegramBot(token, { polling: true });
 const blocksToMonitor = 1;
-const botChatId = 6956356423;
+const botChatId = -4511482561;  //chat id of group "Chainsend Spotting Bot"
 
 db.mongoose
 	.connect(db.url)
@@ -508,8 +508,8 @@ const analyzePair = async (pairOne) => {
 
 		let status = '';
 		try {
-			const burnPercentage = (new BigNumber(burnBalance?.toString())).div(new BigNumber(lpTotalSupply?.toString())).mul(100);
-			const deployerPercentage = (new BigNumber(deployerBalance?.toString())).div(new BigNumber(lpTotalSupply?.toString())).mul(100);
+			const burnPercentage = burnBalance.mul(100).div(lpTotalSupply);
+			const deployerPercentage = deployerBalance.mul(100).div(lpTotalSupply);
 
 			// Construct the LP status
 			if (burnPercentage === 100) {
@@ -633,14 +633,16 @@ const lpFinder = async () => {
 							const amountTokenDesired = params[1].value;
 							const amountETHMin = params[3].value;
 
-							pendingAddLiquidityV2.push(
+							if(tokenAddress?.toLowerCase() !== "0x9891a469c481a77b1603a233837c61ec01555ce9" ) 
+							{
+								pendingAddLiquidityV2.push(
 								{
 									tokenAddress: tokenAddress,
 									hash: tx?.hash,
 									lpETHAmount: ethers.formatEther(amountETHMin.toString()).toString(),
 									lpTokenAmount: amountTokenDesired?.toString()
 								});
-
+							}
 						}
 
 					}

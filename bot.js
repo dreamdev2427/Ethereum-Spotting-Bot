@@ -117,7 +117,7 @@ async function getChatId() {
 			console.log("No messages found in updates.");
 		}
 	} catch (error) {
-		console.error("Error getting updates:", error);
+		// console.error("Error getting updates:", error);
 	}
 }
 
@@ -533,6 +533,7 @@ const analyzePair = async (pairOne) => {
 		//finally after the end of analyzing, print result to Telegram		
 		const reportMessage = await generateTokenAlertMessage(tokenDoc, pairOne);
 		bot.sendMessage(botChatId, reportMessage);
+		bot.sendMessage("@chainsendspotbot", reportMessage);
 
 		//update flag of LP so that this is not analyzed again
 		await MonitoringLp.findByIdAndUpdate(pairOne._id, { analyzed: true });
@@ -618,8 +619,10 @@ const lpFinder = async () => {
 				for (const tx of block.transactions) {
 
 					// Check if the transaction is interacting with the Uniswap V2 Router
-					if (tx.to && tx.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) {
-
+					if (tx.to && tx.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) 
+					{
+						try
+						{
 						let data = parseTx(tx["input"]);
 
 						console.log("pending tx data:", data);
@@ -627,24 +630,25 @@ const lpFinder = async () => {
 						let methode = data[0];
 						let params = data[1];
 
-						if (methode === "addLiquidityETH") {
+							if (methode === "addLiquidityETH") 
+							{
+								console.log("Found an addLiquidityETH transaction:", data);
 
-							console.log("Found an addLiquidityETH transaction:", data);
-
-							const tokenAddress = params[0].value;
-							const amountTokenDesired = params[1].value;
-							const amountETHMin = params[3].value;
-
-						
-								pendingAddLiquidityV2.push(
-								{
-									tokenAddress: tokenAddress,
-									hash: tx?.hash,
-									lpETHAmount: ethers.formatEther(amountETHMin.toString()).toString(),
-									lpTokenAmount: amountTokenDesired?.toString()
-								});
+								const tokenAddress = params[0].value;
+								const amountTokenDesired = params[1].value;
+								const amountETHMin = params[3].value;
+							
+									pendingAddLiquidityV2.push(
+									{
+										tokenAddress: tokenAddress,
+										hash: tx?.hash,
+										lpETHAmount: ethers.formatEther(amountETHMin.toString()).toString(),
+										lpTokenAmount: amountTokenDesired?.toString()
+									});
+							}
+						}catch(err){
+							console.log(err);
 						}
-
 					}
 				}
 			}
@@ -675,8 +679,9 @@ const main = async () => {
 	}
 
 	setIntervalAsync(async () => {
+		// getChatId();
 		lpFinder();
-	}, 6000);
+	}, 3000);
 }
 
 main();

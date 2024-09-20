@@ -32,7 +32,10 @@ async function getTokenTaxesEth(tokenAddress) {
     try {
         const url = `https://honeypot.is/ethereum?address=${tokenAddress}`
 
-        const browser = await puppeteer.launch({ignoreDefaultArgs: ['--disable-extensions']})
+        const browser = await puppeteer.launch({
+            args: ['--no-sandbox'],
+            timeout: 10000,
+          });
         const page = await browser.newPage();
 
         await page.goto(url, { waitUntil: 'networkidle0' });

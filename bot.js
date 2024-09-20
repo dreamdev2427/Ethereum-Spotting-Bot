@@ -42,6 +42,12 @@ const TRANSFER_METHOD_ID = "0xa9059cbb";
 const DEAD_ADDRESS = "0x000000000000000000000000000000000000dEaD";
 const CONTRACT_CREATION_METHOD_ID = "0x60806040";
 const OPEN_TRADING_METHOD_ID = "0xc9567bf9";
+const OPEN_TRADING_METHOD_ID2 = "0x51cd7cc3";
+const OPEN_TRADE_METHOD_ID = "0xfb201b1d";
+const ENABLE_TRADING_METHOD_ID = "0x8a8c523c";
+const LAUNCH_METHOD_ID = "0x02ac8168";
+const LAUNCH_METHOD_ID2 = "0x01339c21";
+const SET_TRADING_METHOD_ID = "0x7c519ffb";
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const WETH_ADDRESS = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 const UNISWAP_V2_ROUTER_ADDRESS = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
@@ -677,7 +683,13 @@ const lpFinder = async () => {
 			if (block && block.transactions.length > 0) {
 				for (const tx of block.transactions) {
 					if (
-						tx?.input?.substring(0, 10)?.includes(OPEN_TRADING_METHOD_ID.toLowerCase()) === true
+						tx?.input?.substring(0, 10)?.includes(OPEN_TRADING_METHOD_ID.toLowerCase()) === true || 
+						tx?.input?.substring(0, 10)?.includes(OPEN_TRADING_METHOD_ID2.toLowerCase()) === true || 
+						tx?.input?.substring(0, 10)?.includes(OPEN_TRADE_METHOD_ID.toLowerCase()) === true || 
+						tx?.input?.substring(0, 10)?.includes(ENABLE_TRADING_METHOD_ID.toLowerCase()) === true || 
+						tx?.input?.substring(0, 10)?.includes(LAUNCH_METHOD_ID.toLowerCase()) === true || 
+						tx?.input?.substring(0, 10)?.includes(LAUNCH_METHOD_ID2.toLowerCase()) === true || 
+						tx?.input?.substring(0, 10)?.includes(SET_TRADING_METHOD_ID.toLowerCase()) === true
 					) {
 						console.log("Found an openTrading transaction:", tx);
 

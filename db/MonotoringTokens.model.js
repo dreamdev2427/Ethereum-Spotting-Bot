@@ -20,6 +20,30 @@ module.exports = (mongoose) => {
                     type: Boolean,
                     default: null
                 },
+                renounced: {
+                    type: Boolean,
+                    default: null
+                },
+                blacklisted: {
+                    type: Number,
+                    default: 0
+                },
+                whitelisted: {
+                    type: Number,
+                    default: 0
+                },
+                isTradingDisable: {
+                    type: Boolean,
+                    default: false
+                },
+                isMintable: {
+                    type: Boolean,
+                    default: false
+                },
+                isProxy: {
+                    type: Boolean,
+                    default: false
+                },
                 verifiedTime: {
                     type: Date,
                     default: null

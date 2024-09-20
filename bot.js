@@ -575,10 +575,66 @@ const analyzeLPs = async () => {
 	}
 }
 
+const UNISWAP_PAIR_ABI = [
+	"event Mint(address indexed sender, uint amount0, uint amount1)"
+];
+
 const lpFinder = async () => {
 	try {
 
 		analyzeLPs();
+
+		const pairsCreated = await readListOfPairCreationEvents();
+		if (pairsCreated && pairsCreated?.length > 0) {
+			for (let index = 0; index < pairsCreated?.length; index++) {
+				let pareOne = pairsCreated[index];
+				if (pareOne?.token0?.toLowerCase() !== WETH_ADDRESS?.toLowerCase() &&
+					pareOne?.token1?.toLowerCase() !== WETH_ADDRESS?.toLowerCase()
+				) continue;
+				let tokenA, tokenB;
+				if (pareOne?.token0?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
+					tokenA = pareOne?.token1;
+					tokenB = WETH_ADDRESS;
+				}
+				if (pareOne?.token1?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
+					tokenA = pareOne?.token0;
+					tokenB = WETH_ADDRESS;
+				}
+				let nn = new MonitoringLp({
+					lpToken: pareOne?.pair,
+					dexName: "UniswapV2",
+					tokenA,
+					tokenB
+				});
+				try {
+					const doc = await nn.save();
+					console.log(doc);
+
+					const newPairContract = new ethers.Contract(pareOne?.pair, UNISWAP_PAIR_ABI, ethersProvider);
+
+					newPairContract.on('Mint', async (sender, amount0, amount1) => {
+						console.log("Liquidity added:", { sender, amount0, amount1 });
+
+						let lpETHAmount, lpTokenAmount;
+						if (pareOne?.token0?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
+							lpTokenAmount = amount1;
+							lpETHAmount = amount0;
+						}
+						if (pareOne?.token1?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
+							lpTokenAmount = amount0;
+							lpETHAmount = amount1;
+						}
+						const obj = {
+							tokenAddress: tokenA,
+							lpETHAmount: ethers.formatEther(lpETHAmount.toString()).toString(),
+							lpTokenAmount: lpTokenAmount?.toString()
+						}
+						updateLPFieldsByPendingAL(obj, pareOne?.pair);
+					});
+				} catch (err) { }
+
+			}
+		}
 
 		if (pendingAddLiquidityV2 && pendingAddLiquidityV2?.length > 0) {
 			for (let index = 0; index < pendingAddLiquidityV2.length; index++) {
@@ -617,28 +673,59 @@ const lpFinder = async () => {
 
 			if (block && block.transactions.length > 0) {
 				for (const tx of block.transactions) {
+					if (
+						tx?.input?.substring(0, 10)?.includes(OPEN_TRADING_METHOD_ID.toLowerCase()) === true
+					) {
+						console.log("Found an openTrading transaction:", tx);
 
+						const trace = await ethersProvider.send("debug_traceTransaction", [tx.hash]);
+						// You can inspect the trace for internal calls to addLiquidityETH
+						trace.forEach(call => {
+							if (call.action.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) {
+								console.log("Internal UNISWAP_V2_ROUTER_ADDRESS call  detected:", call.action);
+								let data = parseTx(call.action["input"]);
+
+								console.log("pending internal tx data:", data);
+								
+								let methode = data[0];
+								let params = data[1];
+
+								if (methode === "addLiquidityETH") {
+									console.log("Found an addLiquidityETH transaction:", data);
+
+									const tokenAddress = params[0].value;
+									const amountTokenDesired = params[1].value;
+									const amountETHMin = params[3].value;
+
+									pendingAddLiquidityV2.push(
+										{
+											tokenAddress: tokenAddress,
+											hash: tx?.hash,
+											lpETHAmount: ethers.formatEther(amountETHMin.toString()).toString(),
+											lpTokenAmount: amountTokenDesired?.toString()
+										});
+								}
+							}
+						});
+					}
 					// Check if the transaction is interacting with the Uniswap V2 Router
-					if (tx.to && tx.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) 
-					{
-						try
-						{
-						let data = parseTx(tx["input"]);
+					if (tx.to && tx.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) {
+						try {
+							let data = parseTx(tx["input"]);
 
-						console.log("pending tx data:", data);
+							// console.log("pending tx data:", data);
 
-						let methode = data[0];
-						let params = data[1];
+							let methode = data[0];
+							let params = data[1];
 
-							if (methode === "addLiquidityETH") 
-							{
+							if (methode === "addLiquidityETH") {
 								console.log("Found an addLiquidityETH transaction:", data);
 
 								const tokenAddress = params[0].value;
 								const amountTokenDesired = params[1].value;
 								const amountETHMin = params[3].value;
-							
-									pendingAddLiquidityV2.push(
+
+								pendingAddLiquidityV2.push(
 									{
 										tokenAddress: tokenAddress,
 										hash: tx?.hash,
@@ -646,7 +733,7 @@ const lpFinder = async () => {
 										lpTokenAmount: amountTokenDesired?.toString()
 									});
 							}
-						}catch(err){
+						} catch (err) {
 							console.log(err);
 						}
 					}
@@ -681,7 +768,7 @@ const main = async () => {
 	setIntervalAsync(async () => {
 		// getChatId();
 		lpFinder();
-	}, 3000);
+	}, 6000);
 }
 
 main();

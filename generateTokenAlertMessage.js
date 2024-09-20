@@ -76,7 +76,6 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo) => {
     🔹Token address: ${tokenInfo?.address}
     💢Pair: $${tokenInfo?.symbol} / ETH
     💢Pair Address: ${pairInfo?.lpToken}
-    ${tokenInfo?.verified? "🟢 Verified" : "❌Not verified"} 
     🌐Socials: Website Telegram Twitter
     🔖Tax: Buy ${taxInfo?.buy} %, Sell ${taxInfo?.sell} %
     
@@ -90,20 +89,15 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo) => {
             20%  Supply bundled (link to bundled wallets)
     
     SAFETY SPOT
-    1.  Proxy Contract: Y/N
+    1.  Proxy Contract: ${tokenInfo?.isProxy? "❌" : "🟢"} 
     2.  Contract Verified:  ${tokenInfo?.verified? "🟢 " : "❌"} 
-    3.  Renounced:  Y/N   Fake Renounce:  YES (only 10% of supply in LP)
-    4.  Blacklisted: Y/N   Specify number e.g (3 wallets)
-    5.  Whitelisted:  Y/N
-    6.  Proxy Contract: Y/N  (link to the proxy on etherscan)
-    7.  Trading Disable Function:  YES/NO
-    8.  Mintable: Y/N
+    3.  Renounced:  ${tokenInfo?.renounced? "🟢 " : "❌"}    
+    4.  Blacklisted: ${tokenInfo?.blacklisted? "❌" : "🟢"}  
+    5.  Whitelisted:  ${tokenInfo?.whitelisted? "❌" : "🟢"}
+    6.  Trading Disable Function:  ${tokenInfo?.isTradingDisable? "❌" : "🟢"}
+    7.  Mintable: ${tokenInfo?.isMintable? "❌" : "🟢"}
 
     🕰 Time launched - 3 hours ago
-    Wallet Amount: 0.5ETH or 1,125 USD
-    Total Tax Generated: 4.5ETH or 6,890 , 100% tax
-                        100% of the bundled wallet sold.
-    Amount transferred out: 4.0ETH or 96% of the tax
 
     SNIPE:  Banana, GEEK, Alfred, Maestro, Signma.
 

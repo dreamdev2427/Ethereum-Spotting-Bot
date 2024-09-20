@@ -121,7 +121,7 @@ async function getChatId() {
 
 
 var pendingAddLiquidityV2 = [];
-
+var pairsOnAnalyze = new Map();
 
 
 
@@ -340,13 +340,26 @@ const updateLPFieldsByPendingAL = async (pendingAl, lpAddress) => {
 			...updatingFields,
 			lpETHAmounts: currentLpETHs
 		}
-		await MonitoringToken.findByIdAndUpdate(FoundToken._id, {
+		MonitoringToken.findByIdAndUpdate(FoundToken._id, {
 			...updatingFields
-		}).then((data) => {
+		}).then( (data) => {
 			console.log(data);
+			bot.sendMessage(botChatId, JSON.stringify({data, ...updatingFields}, null, 2) );
 		}).catch((error => {
 			console.error(error);
 		}));
+	}else {								
+		// //add this token to DB
+		fillBasicInforOfToken(tokenAddress, {
+			lpAdded: true,
+			lpAddresses: [lpAddress],
+			lpETHAmounts: [
+				{
+					address: lpAddress,
+					amount: pendingAl.lpETHAmount
+				}
+			]
+		});
 	}
 }
 
@@ -413,7 +426,7 @@ const fillBasicInforOfToken = async (tokenAddress, updatingFields = {}) => {
 			delete doc.createdAt;
 			delete doc.updatedAt;
 			delete doc["__v"];
-			await bot.sendMessage(botChatId, JSON.stringify(doc, null, 2) );			
+			bot.sendMessage(botChatId, JSON.stringify(doc, null, 2) );			
 		} catch (err) { }
 	}
 }
@@ -482,9 +495,53 @@ const readListOfPairCreationEvents = async () => {
 	}
 }
 
+const analyzePair = async (pairOne) => {
+	try{
+		if ( isEmpty( pairsOnAnalyze.get(pairOne._id.toString()) ) ) return;
+
+		console.log("analyzePair(), pairOne : ", pairOne);
+		await MonitoringLp.findByIdAndUpdate(pairOne._id, {analyzed: true});
+		
+		pairsOnAnalyze.delete(pairOne._id);
+
+	}catch(err){
+		console.log(err);
+	}
+}
+
+const analyzeLPs = async () => {
+	try{
+		const notAnalyzedBots = await MonitoringLp.find({analyzed : false });
+		if (isEmpty(notAnalyzedBots)) {
+			return;
+		}
+		
+		for (let index = 0; index < notAnalyzedBots.length; index++) {
+			const pairOne = notAnalyzedBots[index];
+
+			if (isEmpty(pairOne)) {
+			continue;
+			}
+
+			if (pairsOnAnalyze.get(pairOne._id)) continue;
+
+			pairsOnAnalyze.set(pairOne._id, true);
+
+			analyzePair(pairOne);
+
+		}
+
+	}catch(err){
+		console.log(err);
+	}
+}
 
 const lpFinder = async () => {
 	try {
+
+		console.log("...")
+		
+		analyzeLPs();
 
 		if (pendingAddLiquidityV2 && pendingAddLiquidityV2?.length > 0) {
 			for (let index = 0; index < pendingAddLiquidityV2.length; index++) {
@@ -494,21 +551,17 @@ const lpFinder = async () => {
 					let is_pending = await isPending(pendingAlV2.hash);
 					if (!is_pending) {
 						let lpAddressV2 = await getLPTokenAddressV2(pendingAlV2.tokenAddress);
-						let lpContract = new ethers.Contract(pareOne?.pair, erc20Abi, ethersProvider);
-						let totalSupply = await lpContract.totalSupply();
-						totalSupply = ethers.formatEther(totalSupply?.toString(), "ether");
 						if (lpAddressV2) {
 							let newMLP = new MonitoringLp({
 								lpToken: lpAddressV2,
 								dexName: "UniswapV2",
 								tokenA: pendingAlV2.tokenAddress,
-								tokenB: WETH_ADDRESS,
-								totalSupply: totalSupply
+								tokenB: WETH_ADDRESS
 							});
 							try {
 								const doc = await newMLP.save()
 								console.log(doc);
-							} catch (err) { }
+							} catch (err) { }							
 							updateLPFieldsByPendingAL(pendingAlV2, lpAddressV2);
 							pendingAddLiquidityV2 = pendingAddLiquidityV2.filter(txItem => txItem.hash !== pendingAlV2.hash);
 						}
@@ -533,7 +586,7 @@ const lpFinder = async () => {
 
 						let data = parseTx(tx["input"]);
 
-						console.log("Pending transaction data:", data);
+						// console.log("Pending transaction data:", data);
 
 						let methode = data[0];
 						let params = data[1];
@@ -544,22 +597,6 @@ const lpFinder = async () => {
 
 							const tokenAddress = params[0].value;
 							const amountETHMin = params[3].value;
-
-							let FoundToken = await MonitoringToken.findOne({ address: new RegExp('^' + tokenAddress + '$', 'i') });
-							if (FoundToken) {
-								MonitoringToken.findByIdAndUpdate(FoundToken._id, {
-									lpAdded: true,
-								}).then((data) => {
-								})
-									.catch((error => {
-										console.error(error);
-									}))
-							} else {
-								// //add this token to DB
-								fillBasicInforOfToken(tokenAddress, {
-									lpAdded: true
-								});
-							}
 
 							pendingAddLiquidityV2.push(
 								{
@@ -576,7 +613,7 @@ const lpFinder = async () => {
 		} catch (err) {
 			console.error("Error fetching pending block:", err);
 		}
-
+		
 	} catch (err) {
 		console.log(err);
 	}

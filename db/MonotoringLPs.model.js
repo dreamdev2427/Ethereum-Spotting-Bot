@@ -31,6 +31,10 @@ module.exports = (mongoose) => {
                 chainId: {
                     type: String,
                     default: 1
+                },
+                analyzed: {
+                    type: Boolean,
+                    default: false
                 }
             },
             { timestamps: true }

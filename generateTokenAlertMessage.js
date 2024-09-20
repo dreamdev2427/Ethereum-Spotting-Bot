@@ -32,7 +32,7 @@ async function getTokenTaxesEth(tokenAddress) {
     try {
         const url = `https://honeypot.is/ethereum?address=${tokenAddress}`
 
-        const browser = await puppeteer.launch();
+        const browser = await puppeteer.launch({ignoreDefaultArgs: ['--disable-extensions']})
         const page = await browser.newPage();
 
         await page.goto(url, { waitUntil: 'networkidle0' });
@@ -97,7 +97,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo) => {
     6.  Trading Disable Function:  ${tokenInfo?.isTradingDisable? "❌ Has disable func" : "🟢 No disable func"}
     7.  Mintable: ${tokenInfo?.isMintable? "❌ Mintable" : "🟢 Not mintable"}
 
-    🕰 Time launched - ${new Date(launchTime)?.toISOString() }
+    🕰 Time launched : ${new Date(launchTime)?.toISOString() }
 
     SNIPE:  Banana, GEEK, Alfred, Maestro, Signma.
 

@@ -373,6 +373,7 @@ const fillBasicInforOfToken = async (tokenAddress, updatingFields = {}) => {
 	let name = await tokenContract.name();
 	let decimals = await tokenContract.decimals();
 	let totalSupply = await tokenContract.totalSupply();
+	totalSupply = ethers.formatUnits(totalSupply?.toString(), decimals);
 
 	if (isEmpty(name) === false) {
 		const checkresult = await checkVerifiedAndGetDeployer(
@@ -408,6 +409,10 @@ const fillBasicInforOfToken = async (tokenAddress, updatingFields = {}) => {
 		try {
 			const doc = await newMonitoring.save();
 			console.log(doc);
+			delete doc._id;
+			delete doc.createdAt;
+			delete doc.updatedAt;
+			delete doc["__v"];
 			await bot.sendMessage(botChatId, JSON.stringify(doc, null, 2) );			
 		} catch (err) { }
 	}

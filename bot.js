@@ -519,8 +519,8 @@ const analyzePair = async (pairOne) => {
 
 		let status = '';
 		try {
-			const burnPercentage = burnBalance.mul(100).div(lpTotalSupply);
-			const deployerPercentage = deployerBalance.mul(100).div(lpTotalSupply);
+			const burnPercentage = BigInt(burnBalance?.toString()) * BigInt(100) / BigInt(lpTotalSupply?.toString());
+			const deployerPercentage = BigInt(deployerBalance?.toString()) * BigInt(100) / BigInt(lpTotalSupply?.toString());
 
 			// Construct the LP status
 			if (burnPercentage === 100) {
@@ -528,12 +528,12 @@ const analyzePair = async (pairOne) => {
 			} else if (Number(burnPercentage?.toString()) > 0 && Number(burnPercentage?.toString()) < 100) {
 				status = `Burnt ${Number(burnPercentage?.toString()).toFixed(2)}% LP tokens`;
 			}
+			if (burnPercentage == 0) {
+				status = `No significant burning detected.`;
+			}
 			if (deployerPercentage > 0) {
 				status += `
 			Deployer holds ${Number(deployerPercentage?.toString()).toFixed(2)}% of LP tokens`;
-			}
-			if (burnPercentage == 0) {
-				status = `No significant burning detected.`;
 			}
 		} catch (err) {
 			console.log(err);
@@ -542,7 +542,7 @@ const analyzePair = async (pairOne) => {
 		console.log("Burn or lock status : ", status);
 
 		//finally after the end of analyzing, print result to Telegram		
-		const reportMessage = await generateTokenAlertMessage(tokenDoc, pairOne);
+		const reportMessage = await generateTokenAlertMessage(tokenDoc, pairOne, status);
 		bot.sendMessage(botChatId, reportMessage);
 		bot.sendMessage("@chainsendspotbot", reportMessage);
 

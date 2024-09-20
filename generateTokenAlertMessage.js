@@ -1,6 +1,7 @@
 const axios = require("axios");
 const puppeteer = require('puppeteer');
 const {ethers} = require("ethers");
+const isEmpty = require("is-empty");
 
 async function getMarketCapAndPrice(pairAddress) {
 	try {
@@ -65,7 +66,7 @@ async function getTokenTaxesEth(tokenAddress) {
 }
 
 
-const generateTokenAlertMessage = async (tokenInfo, pairInfo) => {
+const generateTokenAlertMessage = async (tokenInfo, pairInfo, status) => {
     const taxInfo = await getTokenTaxesEth(tokenInfo?.address);
     const tokenTotalSupply = tokenInfo?.totalSupply;
     const decimals = tokenInfo?.decimals;
@@ -86,7 +87,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo) => {
     💰 LIQUIDITY POOL 💰
     1.  LP Amount ${tokenInfo["lpETHAmounts"] && tokenInfo["lpETHAmounts"]?.length> 0 ? Number(tokenInfo["lpETHAmounts"][0]["amount"])?.toFixed(3) : 0 } ETH
     2.  Initial % pooled: ${isNaN(initalTokenInLPPercentage)? 0 : Number(initalTokenInLPPercentage).toFixed(2)}% of the total supply    
-    3.  LP Status : 100% LP Burnt
+    3.  LP Status : ${isEmpty(status)? "100% LP burnt": status}
     
     👨‍💻 Deployer:  ${tokenInfo.deployer}
     Deployer funded amount: ${tokenInfo?.deployerFirstFundedAmount} ETH

@@ -343,8 +343,7 @@ const updateLPFieldsByPendingAL = async (pendingAl, lpAddress) => {
 		MonitoringToken.findByIdAndUpdate(FoundToken._id, {
 			...updatingFields
 		}).then( (data) => {
-			console.log(data);
-			bot.sendMessage(botChatId, JSON.stringify({data, ...updatingFields}, null, 2) );
+			console.log(data);			
 		}).catch((error => {
 			console.error(error);
 		}));
@@ -422,11 +421,6 @@ const fillBasicInforOfToken = async (tokenAddress, updatingFields = {}) => {
 		try {
 			const doc = await newMonitoring.save();
 			console.log(doc);
-			delete doc._id;
-			delete doc.createdAt;
-			delete doc.updatedAt;
-			delete doc["__v"];
-			bot.sendMessage(botChatId, JSON.stringify(doc, null, 2) );			
 		} catch (err) { }
 	}
 }
@@ -500,10 +494,23 @@ const analyzePair = async (pairOne) => {
 		if ( isEmpty( pairsOnAnalyze.get(pairOne._id.toString()) ) ) return;
 
 		console.log("analyzePair(), pairOne : ", pairOne);
-		await MonitoringLp.findByIdAndUpdate(pairOne._id, {analyzed: true});
-		
-		pairsOnAnalyze.delete(pairOne._id);
 
+		let tokenDoc = await MonitoringToken.findOne({ address: new RegExp('^' + pairOne.tokenA + '$', 'i') });
+		if(isEmpty(tokenDoc) === false) {
+			//add code for analyze token and pair at here
+
+			
+			//finally after the end of analyzing, print result to Telegram
+			delete tokenDoc._id;
+			delete tokenDoc.createdAt;
+			delete tokenDoc.updatedAt;
+			delete tokenDoc["__v"];
+			bot.sendMessage(botChatId, JSON.stringify(tokenDoc, null, 2) );			
+			
+			//update flag of LP so that this is not analyzed again
+			await MonitoringLp.findByIdAndUpdate(pairOne._id, {analyzed: true});				
+			pairsOnAnalyze.delete(pairOne._id.toString());
+		}
 	}catch(err){
 		console.log(err);
 	}
@@ -523,9 +530,9 @@ const analyzeLPs = async () => {
 			continue;
 			}
 
-			if (pairsOnAnalyze.get(pairOne._id)) continue;
+			if (pairsOnAnalyze.get(pairOne._id.toString())) continue;
 
-			pairsOnAnalyze.set(pairOne._id, true);
+			pairsOnAnalyze.set(pairOne._id.toString(), true);
 
 			analyzePair(pairOne);
 
@@ -540,7 +547,7 @@ const lpFinder = async () => {
 	try {
 
 		console.log("...")
-		
+
 		analyzeLPs();
 
 		if (pendingAddLiquidityV2 && pendingAddLiquidityV2?.length > 0) {

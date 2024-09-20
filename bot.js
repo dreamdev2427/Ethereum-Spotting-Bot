@@ -486,58 +486,6 @@ const readListOfPairCreationEvents = async () => {
 const lpFinder = async () => {
 	try {
 
-		const pairs = await readListOfPairCreationEvents();
-
-		console.log("created pairs array length : ", pairs?.length)
-		if (pairs && pairs?.length > 0) {
-			for (let index = 0; index < pairs?.length; index++) {
-				let pareOne = pairs[index];
-
-				console.log(pareOne);
-				if (pareOne?.token0?.toLowerCase() !== WETH_ADDRESS?.toLowerCase() &&
-					pareOne?.token1?.toLowerCase() !== WETH_ADDRESS?.toLowerCase()
-				) continue;
-				let tokenA, tokenB;
-				if (pareOne?.token0?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
-					tokenA = pareOne?.token1;
-					tokenB = WETH_ADDRESS;
-				}
-				if (pareOne?.token1?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
-					tokenA = pareOne?.token0;
-					tokenB = WETH_ADDRESS;
-				}
-				let lpContract = new ethers.Contract(pareOne?.pair, erc20Abi, ethersProvider);
-				let totalSupply = await lpContract.totalSupply();
-				totalSupply = ethers.formatEther(totalSupply?.toString(), "ether");
-				let newMLP = new MonitoringLp({
-					lpToken: pareOne?.pair,
-					dexName: "UniswapV2",
-					tokenA,
-					tokenB,
-					totalSupply: totalSupply
-				});
-				try {
-					const doc = await newMLP.save();
-					console.log(doc);
-				} catch (err) { }
-				let FoundToken = await MonitoringToken.findOne({ address: new RegExp('^' + tokenA + '$', 'i') });
-				if (FoundToken) {
-					MonitoringToken.findByIdAndUpdate(FoundToken._id, {
-						lpAdded: true,
-					}).then((data) => {
-					})
-						.catch((error => {
-							console.error(error);
-						}))
-				} else {
-					// //add this token to DB
-					fillBasicInforOfToken(tokenA, {
-						lpAdded: true
-					});
-				}
-			}
-		}
-
 		if (pendingAddLiquidityV2 && pendingAddLiquidityV2?.length > 0) {
 			for (let index = 0; index < pendingAddLiquidityV2.length; index++) {
 

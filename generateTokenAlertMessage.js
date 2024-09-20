@@ -58,8 +58,8 @@ async function getTokenTaxesEth(tokenAddress) {
 
         await browser.close();
     } catch (err) {
-        console.error(`==> ${new Date().toLocaleString()}`)
-        console.error(err)
+        console.log(`==> ${new Date().toLocaleString()}`)
+        console.log(err)
     }
 
     return response;

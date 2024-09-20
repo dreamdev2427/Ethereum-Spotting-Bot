@@ -132,6 +132,7 @@ async function getChatId() {
 
 
 var pendingAddLiquidityV2 = [];
+var pendingOpenTradingV2 = [];
 var pairsOnAnalyze = new Map();
 
 
@@ -595,56 +596,107 @@ const lpFinder = async () => {
 
 		analyzeLPs();
 
-		const pairsCreated = await readListOfPairCreationEvents();
-		if (pairsCreated && pairsCreated?.length > 0) {
-			for (let index = 0; index < pairsCreated?.length; index++) {
-				let pareOne = pairsCreated[index];
-				if (pareOne?.token0?.toLowerCase() !== WETH_ADDRESS?.toLowerCase() &&
-					pareOne?.token1?.toLowerCase() !== WETH_ADDRESS?.toLowerCase()
-				) continue;
-				let tokenA, tokenB;
-				if (pareOne?.token0?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
-					tokenA = pareOne?.token1;
-					tokenB = WETH_ADDRESS;
-				}
-				if (pareOne?.token1?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
-					tokenA = pareOne?.token0;
-					tokenB = WETH_ADDRESS;
-				}
-				let nn = new MonitoringLp({
-					lpToken: pareOne?.pair,
-					dexName: "UniswapV2",
-					tokenA,
-					tokenB
-				});
+		// const pairsCreated = await readListOfPairCreationEvents();
+		// if (pairsCreated && pairsCreated?.length > 0) {
+		// 	for (let index = 0; index < pairsCreated?.length; index++) {
+		// 		let pareOne = pairsCreated[index];
+		// 		if (pareOne?.token0?.toLowerCase() !== WETH_ADDRESS?.toLowerCase() &&
+		// 			pareOne?.token1?.toLowerCase() !== WETH_ADDRESS?.toLowerCase()
+		// 		) continue;
+		// 		let tokenA, tokenB;
+		// 		if (pareOne?.token0?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
+		// 			tokenA = pareOne?.token1;
+		// 			tokenB = WETH_ADDRESS;
+		// 		}
+		// 		if (pareOne?.token1?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
+		// 			tokenA = pareOne?.token0;
+		// 			tokenB = WETH_ADDRESS;
+		// 		}
+		// 		let nn = new MonitoringLp({
+		// 			lpToken: pareOne?.pair,
+		// 			dexName: "UniswapV2",
+		// 			tokenA,
+		// 			tokenB
+		// 		});
+		// 		try {
+		// 			const doc = await nn.save();
+		// 			console.log(doc);
+
+		// 			const newPairContract = new ethers.Contract(pareOne?.pair, UNISWAP_PAIR_ABI, ethersProvider);
+
+		// 			newPairContract.on('Mint', async (sender, amount0, amount1) => {
+		// 				console.log("Liquidity added:", { sender, amount0, amount1 });
+
+		// 				let lpETHAmount, lpTokenAmount;
+		// 				if (pareOne?.token0?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
+		// 					lpTokenAmount = amount1;
+		// 					lpETHAmount = amount0;
+		// 				}
+		// 				if (pareOne?.token1?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
+		// 					lpTokenAmount = amount0;
+		// 					lpETHAmount = amount1;
+		// 				}
+		// 				const obj = {
+		// 					tokenAddress: tokenA,
+		// 					lpETHAmount: ethers.formatEther(lpETHAmount.toString()).toString(),
+		// 					lpTokenAmount: lpTokenAmount?.toString(),
+		// 					timestamp: new Date().getTime()
+		// 				}
+		// 				updateLPFieldsByPendingAL(obj, pareOne?.pair);
+		// 			});
+		// 		} catch (err) { }
+
+		// 	}
+		// }
+
+		if (pendingOpenTradingV2 && pendingOpenTradingV2?.length > 0) {
+			for (let index = 0; index < pendingOpenTradingV2.length; index++) {
+
+				const tx = pendingOpenTradingV2[index];
+				
 				try {
-					const doc = await nn.save();
-					console.log(doc);
+					let is_pending = await isPending(tx.hash);
+					if (!is_pending) {
+					// const trace = await ethersAlchemyProvider.send("debug_traceTransaction", [tx.hash]);
+					const trace = await ethersProvider.send("debug_traceTransaction", [tx.hash, {"tracer": "callTracer"} ]);
+					// You can inspect the trace for internal calls to addLiquidityETH
+					
+					console.log("trace:", trace);
 
-					const newPairContract = new ethers.Contract(pareOne?.pair, UNISWAP_PAIR_ABI, ethersProvider);
+					trace.calls?.forEach(call => {
+						if (call.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) {
+							console.log("Internal UNISWAP_V2_ROUTER_ADDRESS call  detected:", call);
+							let data = parseTx(call["input"]);
 
-					newPairContract.on('Mint', async (sender, amount0, amount1) => {
-						console.log("Liquidity added:", { sender, amount0, amount1 });
+							console.log("pending internal tx data:", data);
 
-						let lpETHAmount, lpTokenAmount;
-						if (pareOne?.token0?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
-							lpTokenAmount = amount1;
-							lpETHAmount = amount0;
+							let methode = data[0];
+							let params = data[1];
+
+							if (methode === "addLiquidityETH") {
+								console.log("Found an internal addLiquidityETH transaction:", data);
+
+								const tokenAddress = params[0].value;
+								const amountTokenDesired = params[1].value;
+								const amountETHMin = params[3].value;
+
+								pendingAddLiquidityV2.push(
+									{
+										tokenAddress: tokenAddress,
+										hash: tx?.hash,
+										lpETHAmount: ethers.formatEther(amountETHMin.toString()).toString(),
+										lpTokenAmount: amountTokenDesired?.toString(),
+										timestamp: new Date().getTime()
+									});
+							}
 						}
-						if (pareOne?.token1?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
-							lpTokenAmount = amount0;
-							lpETHAmount = amount1;
-						}
-						const obj = {
-							tokenAddress: tokenA,
-							lpETHAmount: ethers.formatEther(lpETHAmount.toString()).toString(),
-							lpTokenAmount: lpTokenAmount?.toString(),
-							timestamp: new Date().getTime()
-						}
-						updateLPFieldsByPendingAL(obj, pareOne?.pair);
 					});
-				} catch (err) { }
-
+					pendingOpenTradingV2 = pendingOpenTradingV2.filter(txItem => txItem.hash !== tx.hash);
+				}
+				} catch (err) {
+					console.log(err);
+					pendingOpenTradingV2 = pendingOpenTradingV2.filter(txItem => txItem.hash !== tx.hash);
+				}
 			}
 		}
 
@@ -695,43 +747,16 @@ const lpFinder = async () => {
 						tx?.input?.substring(0, 10)?.includes(SET_TRADING_METHOD_ID.toLowerCase()) === true
 					) {
 						console.log("Found an openTrading transaction:", tx);
-						try {
-							const trace = await ethersAlchemyProvider.send("debug_traceTransaction", [tx.hash]);
-							// You can inspect the trace for internal calls to addLiquidityETH
-							trace.forEach(call => {
-								if (call.action.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) {
-									console.log("Internal UNISWAP_V2_ROUTER_ADDRESS call  detected:", call.action);
-									let data = parseTx(call.action["input"]);
-
-									console.log("pending internal tx data:", data);
-
-									let methode = data[0];
-									let params = data[1];
-
-									if (methode === "addLiquidityETH") {
-										console.log("Found an addLiquidityETH transaction:", data);
-
-										const tokenAddress = params[0].value;
-										const amountTokenDesired = params[1].value;
-										const amountETHMin = params[3].value;
-
-										pendingAddLiquidityV2.push(
-											{
-												tokenAddress: tokenAddress,
-												hash: tx?.hash,
-												lpETHAmount: ethers.formatEther(amountETHMin.toString()).toString(),
-												lpTokenAmount: amountTokenDesired?.toString(),
-												timestamp: new Date().getTime()
-											});
-									}
-								}
+						
+						pendingOpenTradingV2.push(
+							{								
+								hash: tx?.hash,
+								tx
 							});
-						} catch (err) {
-							console.log(err);
-						}
+
 					}
 					// Check if the transaction is interacting with the Uniswap V2 Router
-					if (tx.to && tx.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) {
+					else if (tx.to && tx.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) {
 						try {
 							let data = parseTx(tx["input"]);
 

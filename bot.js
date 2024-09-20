@@ -336,7 +336,8 @@ const updateLPFieldsByPendingAL = async (pendingAl, lpAddress) => {
 		currentLpETHs = [...currentLpETHs, {
 			address: lpAddress,
 			amount: pendingAl.lpETHAmount,
-			tokenAmount: pendingAl.lpTokenAmount
+			tokenAmount: pendingAl.lpTokenAmount,
+			timestamp: pendingAl.timestamp
 		}];
 		updatingFields = {
 			...updatingFields,
@@ -358,7 +359,8 @@ const updateLPFieldsByPendingAL = async (pendingAl, lpAddress) => {
 				{
 					address: lpAddress,
 					amount: pendingAl.lpETHAmount,
-					tokenAmount: pendingAl.lpTokenAmount
+					tokenAmount: pendingAl.lpTokenAmount,
+					timestamp: pendingAl.timestamp
 				}
 			]
 		});
@@ -627,7 +629,8 @@ const lpFinder = async () => {
 						const obj = {
 							tokenAddress: tokenA,
 							lpETHAmount: ethers.formatEther(lpETHAmount.toString()).toString(),
-							lpTokenAmount: lpTokenAmount?.toString()
+							lpTokenAmount: lpTokenAmount?.toString(),
+							timestamp: new Date().getTime()
 						}
 						updateLPFieldsByPendingAL(obj, pareOne?.pair);
 					});
@@ -702,7 +705,8 @@ const lpFinder = async () => {
 											tokenAddress: tokenAddress,
 											hash: tx?.hash,
 											lpETHAmount: ethers.formatEther(amountETHMin.toString()).toString(),
-											lpTokenAmount: amountTokenDesired?.toString()
+											lpTokenAmount: amountTokenDesired?.toString(),
+											timestamp: new Date().getTime()
 										});
 								}
 							}
@@ -730,7 +734,8 @@ const lpFinder = async () => {
 										tokenAddress: tokenAddress,
 										hash: tx?.hash,
 										lpETHAmount: ethers.formatEther(amountETHMin.toString()).toString(),
-										lpTokenAmount: amountTokenDesired?.toString()
+										lpTokenAmount: amountTokenDesired?.toString(),
+										timestamp: new Date().getTime()
 									});
 							}
 						} catch (err) {

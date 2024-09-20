@@ -68,6 +68,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo) => {
     const decimals = tokenInfo?.decimals;
     const initalTokenInLP = ethers.formatUnits(tokenInfo["lpETHAmounts"][0]["tokenAmount"]?.toString(), decimals);
     const initalTokenInLPPercentage = Number(initalTokenInLP) / tokenTotalSupply * 100;    
+    const launchTime = tokenInfo["lpETHAmounts"][0]["timestamp"];
 
     return `
     ChainSend Spotting bot | ${tokenInfo?.name} |
@@ -97,7 +98,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo) => {
     6.  Trading Disable Function:  ${tokenInfo?.isTradingDisable? "❌" : "🟢"}
     7.  Mintable: ${tokenInfo?.isMintable? "❌" : "🟢"}
 
-    🕰 Time launched - 3 hours ago
+    🕰 Time launched - ${new Date(launchTime)?.toISOString() }
 
     SNIPE:  Banana, GEEK, Alfred, Maestro, Signma.
 

@@ -49,6 +49,7 @@ const BASE_URL = "https://api.etherscan.io/api";
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 const WS_RPC_URL = process.env.WS_RPC_URL;
 const HTTP_RPC_URL = process.env.HTTP_RPC_URL;
+const HTTP_ALCHEMY_RPC_URL = process.env.ALCHEMY_RPC_URL;
 const UNISWAP_V2_FACTORY_ADDRESS = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f';
 const UNISWAP_V3_FACTORY_ADDRESS = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
 const BLOCK_BUYING_DURATION = 45 * 1000; //45 second
@@ -70,6 +71,7 @@ const LAUNCH_METHOD_ID2 = "0x01339c21";
 const SET_TRADING_METHOD_ID = "0x7c519ffb";
 
 const ethersProvider = new JsonRpcProvider(HTTP_RPC_URL);
+const ethersAlchemyProvider = new JsonRpcProvider(HTTP_ALCHEMY_RPC_URL);
 
 abiDecoder.addABI(IUniswapV2FactoryABI);
 abiDecoder.addABI(uniswapV2RouterAbi);
@@ -684,46 +686,49 @@ const lpFinder = async () => {
 			if (block && block.transactions.length > 0) {
 				for (const tx of block.transactions) {
 					if (
-						tx?.input?.substring(0, 10)?.includes(OPEN_TRADING_METHOD_ID.toLowerCase()) === true || 
-						tx?.input?.substring(0, 10)?.includes(OPEN_TRADING_METHOD_ID2.toLowerCase()) === true || 
-						tx?.input?.substring(0, 10)?.includes(OPEN_TRADE_METHOD_ID.toLowerCase()) === true || 
-						tx?.input?.substring(0, 10)?.includes(ENABLE_TRADING_METHOD_ID.toLowerCase()) === true || 
-						tx?.input?.substring(0, 10)?.includes(LAUNCH_METHOD_ID.toLowerCase()) === true || 
-						tx?.input?.substring(0, 10)?.includes(LAUNCH_METHOD_ID2.toLowerCase()) === true || 
+						tx?.input?.substring(0, 10)?.includes(OPEN_TRADING_METHOD_ID.toLowerCase()) === true ||
+						tx?.input?.substring(0, 10)?.includes(OPEN_TRADING_METHOD_ID2.toLowerCase()) === true ||
+						tx?.input?.substring(0, 10)?.includes(OPEN_TRADE_METHOD_ID.toLowerCase()) === true ||
+						tx?.input?.substring(0, 10)?.includes(ENABLE_TRADING_METHOD_ID.toLowerCase()) === true ||
+						tx?.input?.substring(0, 10)?.includes(LAUNCH_METHOD_ID.toLowerCase()) === true ||
+						tx?.input?.substring(0, 10)?.includes(LAUNCH_METHOD_ID2.toLowerCase()) === true ||
 						tx?.input?.substring(0, 10)?.includes(SET_TRADING_METHOD_ID.toLowerCase()) === true
 					) {
 						console.log("Found an openTrading transaction:", tx);
+						try {
+							const trace = await ethersAlchemyProvider.send("debug_traceTransaction", [tx.hash]);
+							// You can inspect the trace for internal calls to addLiquidityETH
+							trace.forEach(call => {
+								if (call.action.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) {
+									console.log("Internal UNISWAP_V2_ROUTER_ADDRESS call  detected:", call.action);
+									let data = parseTx(call.action["input"]);
 
-						const trace = await ethersProvider.send("debug_traceTransaction", [tx.hash]);
-						// You can inspect the trace for internal calls to addLiquidityETH
-						trace.forEach(call => {
-							if (call.action.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) {
-								console.log("Internal UNISWAP_V2_ROUTER_ADDRESS call  detected:", call.action);
-								let data = parseTx(call.action["input"]);
+									console.log("pending internal tx data:", data);
 
-								console.log("pending internal tx data:", data);
-								
-								let methode = data[0];
-								let params = data[1];
+									let methode = data[0];
+									let params = data[1];
 
-								if (methode === "addLiquidityETH") {
-									console.log("Found an addLiquidityETH transaction:", data);
+									if (methode === "addLiquidityETH") {
+										console.log("Found an addLiquidityETH transaction:", data);
 
-									const tokenAddress = params[0].value;
-									const amountTokenDesired = params[1].value;
-									const amountETHMin = params[3].value;
+										const tokenAddress = params[0].value;
+										const amountTokenDesired = params[1].value;
+										const amountETHMin = params[3].value;
 
-									pendingAddLiquidityV2.push(
-										{
-											tokenAddress: tokenAddress,
-											hash: tx?.hash,
-											lpETHAmount: ethers.formatEther(amountETHMin.toString()).toString(),
-											lpTokenAmount: amountTokenDesired?.toString(),
-											timestamp: new Date().getTime()
-										});
+										pendingAddLiquidityV2.push(
+											{
+												tokenAddress: tokenAddress,
+												hash: tx?.hash,
+												lpETHAmount: ethers.formatEther(amountETHMin.toString()).toString(),
+												lpTokenAmount: amountTokenDesired?.toString(),
+												timestamp: new Date().getTime()
+											});
+									}
 								}
-							}
-						});
+							});
+						} catch (err) {
+							console.log(err);
+						}
 					}
 					// Check if the transaction is interacting with the Uniswap V2 Router
 					if (tx.to && tx.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) {

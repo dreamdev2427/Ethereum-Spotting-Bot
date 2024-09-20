@@ -89,6 +89,8 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo) => {
     3.  LP Status : 100% LP Burnt
     
     👨‍💻 Deployer:  ${tokenInfo.deployer}
+    Deployer funded amount: ${tokenInfo?.deployerFirstFundedAmount} ETH
+    Deployed funded from: ${tokenInfo?.deployerFirstFundedFrom}
     Bundle CA:  ${tokenInfo?.bundled? "❌ Bundled": "🟢 Not bundled"}
     
     SAFETY SPOT

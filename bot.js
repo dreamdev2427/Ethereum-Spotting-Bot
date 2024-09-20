@@ -622,6 +622,8 @@ const lpFinder = async () => {
 
 						let data = parseTx(tx["input"]);
 
+						console.log("pending tx data:", data);
+
 						let methode = data[0];
 						let params = data[1];
 
@@ -633,8 +635,7 @@ const lpFinder = async () => {
 							const amountTokenDesired = params[1].value;
 							const amountETHMin = params[3].value;
 
-							if(tokenAddress?.toLowerCase() !== "0x9891a469c481a77b1603a233837c61ec01555ce9" ) 
-							{
+						
 								pendingAddLiquidityV2.push(
 								{
 									tokenAddress: tokenAddress,
@@ -642,7 +643,6 @@ const lpFinder = async () => {
 									lpETHAmount: ethers.formatEther(amountETHMin.toString()).toString(),
 									lpTokenAmount: amountTokenDesired?.toString()
 								});
-							}
 						}
 
 					}

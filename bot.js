@@ -349,7 +349,7 @@ const updateLPFieldsByPendingAL = async (pendingAl, lpAddress) => {
 		}));
 	}else {								
 		// //add this token to DB
-		fillBasicInforOfToken(tokenAddress, {
+		fillBasicInforOfToken(pendingAl.tokenAddress, {
 			lpAdded: true,
 			lpAddresses: [lpAddress],
 			lpETHAmounts: [
@@ -495,22 +495,21 @@ const analyzePair = async (pairOne) => {
 
 		console.log("analyzePair(), pairOne : ", pairOne);
 
-		let tokenDoc = await MonitoringToken.findOne({ address: new RegExp('^' + pairOne.tokenA + '$', 'i') });
-		if(isEmpty(tokenDoc) === false) {
-			//add code for analyze token and pair at here
+		const tokenDoc = await MonitoringToken.findOne({ address: new RegExp('^' + pairOne.tokenA + '$', 'i') });
+		//add code for analyze token and pair at here
 
-			
-			//finally after the end of analyzing, print result to Telegram
-			delete tokenDoc._id;
-			delete tokenDoc.createdAt;
-			delete tokenDoc.updatedAt;
-			delete tokenDoc["__v"];
-			bot.sendMessage(botChatId, JSON.stringify(tokenDoc, null, 2) );			
-			
-			//update flag of LP so that this is not analyzed again
-			await MonitoringLp.findByIdAndUpdate(pairOne._id, {analyzed: true});				
-			pairsOnAnalyze.delete(pairOne._id.toString());
-		}
+		
+		//finally after the end of analyzing, print result to Telegram
+		delete tokenDoc._id;
+		delete tokenDoc.createdAt;
+		delete tokenDoc.updatedAt;
+		delete tokenDoc["__v"];
+		bot.sendMessage(botChatId, JSON.stringify(tokenDoc, null, 2) );			
+		
+		//update flag of LP so that this is not analyzed again
+		await MonitoringLp.findByIdAndUpdate(pairOne._id, {analyzed: true});				
+		pairsOnAnalyze.delete(pairOne._id.toString());
+
 	}catch(err){
 		console.log(err);
 	}
@@ -530,12 +529,16 @@ const analyzeLPs = async () => {
 			continue;
 			}
 
+			const tokenDoc = await MonitoringToken.findOne({ address: new RegExp('^' + pairOne.tokenA + '$', 'i') });
+			
+			if(isEmpty(tokenDoc)) continue;
+
 			if (pairsOnAnalyze.get(pairOne._id.toString())) continue;
 
 			pairsOnAnalyze.set(pairOne._id.toString(), true);
 
 			analyzePair(pairOne);
-
+			
 		}
 
 	}catch(err){

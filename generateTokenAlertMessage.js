@@ -86,17 +86,16 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo) => {
     3.  LP Status : 100% LP Burnt
     
     👨‍💻 Deployer:  ${tokenInfo.deployer}
-    Bundle CA:  Yes/NO
-            20%  Supply bundled (link to bundled wallets)
+    Bundle CA:  ${tokenInfo?.bundled? "❌ Bundled": "🟢 Not bundled"}
     
     SAFETY SPOT
-    1.  Proxy Contract: ${tokenInfo?.isProxy? "❌" : "🟢"} 
-    2.  Contract Verified:  ${tokenInfo?.verified? "🟢 " : "❌"} 
-    3.  Renounced:  ${tokenInfo?.renounced? "🟢 " : "❌"}    
-    4.  Blacklisted: ${tokenInfo?.blacklisted? "❌" : "🟢"}  
-    5.  Whitelisted:  ${tokenInfo?.whitelisted? "❌" : "🟢"}
-    6.  Trading Disable Function:  ${tokenInfo?.isTradingDisable? "❌" : "🟢"}
-    7.  Mintable: ${tokenInfo?.isMintable? "❌" : "🟢"}
+    1.  Proxy Contract: ${tokenInfo?.isProxy? "❌ proxy" : "🟢 No proxy"} 
+    2.  Contract Verified:  ${tokenInfo?.verified? "🟢 Verified" : "❌ Not verified"} 
+    3.  Renounced:  ${tokenInfo?.renounced? "🟢 Renounced" : "❌ Not renounced"}    
+    4.  Blacklisted: ${tokenInfo?.blacklisted? "❌ Blacklisted" : "🟢 Not blacklisted"}  
+    5.  Whitelisted:  ${tokenInfo?.whitelisted? "❌ Whitelisted" : "🟢 Not whitelisted"}
+    6.  Trading Disable Function:  ${tokenInfo?.isTradingDisable? "❌ Has disable func" : "🟢 No disable func"}
+    7.  Mintable: ${tokenInfo?.isMintable? "❌ Mintable" : "🟢 Not mintable"}
 
     🕰 Time launched - ${new Date(launchTime)?.toISOString() }
 

@@ -183,28 +183,28 @@ async function isPending(transactionHash) {
 
 const decodeTxLogs = (abi, logs) => {
 	// Create an Interface instance with the ABI
-    const iface = new ethers.Interface(abi);
+	const iface = new ethers.Interface(abi);
 
-    let ret = [];
-    
-    // Loop through the logs and decode them using the interface
-    for (const log of logs) {
-        try {
-            // Try to parse the log and match it with the event signatures in the ABI
-            const parsedLog = iface.parseLog(log);
-            
-            // If parsing succeeds, add the decoded log with event name
-            ret.push({
-                ...parsedLog.args,
-                name: parsedLog.name
-            });
-        } catch (error) {
-            // If log parsing fails (e.g., log doesn't match ABI), skip the log
-            continue;
-        }
-    }
+	let ret = [];
 
-    return ret;
+	// Loop through the logs and decode them using the interface
+	for (const log of logs) {
+		try {
+			// Try to parse the log and match it with the event signatures in the ABI
+			const parsedLog = iface.parseLog(log);
+
+			// If parsing succeeds, add the decoded log with event name
+			ret.push({
+				...parsedLog.args,
+				name: parsedLog.name
+			});
+		} catch (error) {
+			// If log parsing fails (e.g., log doesn't match ABI), skip the log
+			continue;
+		}
+	}
+
+	return ret;
 }
 
 async function getFirstIncomingETHTransaction(developerWalletAddress) {
@@ -284,7 +284,10 @@ const getLpAddresses = async (tokenAddress) => {
 				tokenB: WETH_ADDRESS,
 				totalSupply
 			});
-			newMLP.save().then(() => { }).catch((err) => console.error(err));
+			try {
+				const doc = await newMLP.save();
+				console.log(doc);
+			} catch (err) { }
 		}
 
 		return lpAddresses;
@@ -319,6 +322,7 @@ const updateLPFieldsByPendingAL = async (pendingAl, lpAddress) => {
 		await MonitoringToken.findByIdAndUpdate(FoundToken._id, {
 			...updatingFields
 		}).then((data) => {
+			console.log(data);
 		}).catch((error => {
 			console.error(error);
 		}));
@@ -380,8 +384,10 @@ const fillBasicInforOfToken = async (tokenAddress, updatingFields = {}) => {
 			verifiedTime: checkresult?.verifiedTime || new Date("1970-01-01"),
 			...updatingFields
 		});
-		const doc = await newMonitoring.save();
-		console.log(doc);
+		try {
+			const doc = await newMonitoring.save();
+			console.log(doc);
+		} catch (err) { }
 	}
 }
 
@@ -458,7 +464,6 @@ const lpFinder = async () => {
 		if (pairs && pairs?.length > 0) {
 			for (let index = 0; index < pairs?.length; index++) {
 				let pareOne = pairs[index];
-				console.log(" AAAAAAAA ");
 
 				console.log(pareOne);
 				if (pareOne?.token0?.toLowerCase() !== WETH_ADDRESS?.toLowerCase() &&
@@ -483,13 +488,12 @@ const lpFinder = async () => {
 					tokenB,
 					totalSupply: totalSupply
 				});
-				newMLP.save().then((doc) => {
+				try {
+					const doc = await newMLP.save();
 					console.log(doc);
-				}).catch((err) => {});
+				} catch (err) { }
 				let FoundToken = await MonitoringToken.findOne({ address: new RegExp('^' + tokenA + '$', 'i') });
 				if (FoundToken) {
-					console.log(" FFFFFFF ");
-
 					MonitoringToken.findByIdAndUpdate(FoundToken._id, {
 						lpAdded: true,
 					}).then((data) => {
@@ -525,9 +529,10 @@ const lpFinder = async () => {
 								tokenB: WETH_ADDRESS,
 								totalSupply: totalSupply
 							});
-							newMLP.save().then((doc) => {
+							try {
+								const doc = await newMLP.save()
 								console.log(doc);
-							}).catch((err) => {});
+							} catch (err) { }
 							updateLPFieldsByPendingAL(pendingAlV2, lpAddressV2);
 							pendingAddLiquidityV2 = pendingAddLiquidityV2.filter(txItem => txItem.hash !== pendingAlV2.hash);
 						}
@@ -539,7 +544,7 @@ const lpFinder = async () => {
 				}
 			}
 		}
-		
+
 		try {
 			// Get the pending block
 			const block = await ethersProvider.send("eth_getBlockByNumber", ["pending", true]);
@@ -549,16 +554,16 @@ const lpFinder = async () => {
 
 					// Check if the transaction is interacting with the Uniswap V2 Router
 					if (tx.to && tx.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) {
-						
+
 						let data = parseTx(tx["input"]);
-						
+
 						console.log("Pending transaction data:", data);
 
 						let methode = data[0];
 						let params = data[1];
 
 						if (methode === "addLiquidityETH") {
-							
+
 							console.log("Found an addLiquidityETH transaction:", tx);
 
 							const tokenAddress = params[0].value;
@@ -581,11 +586,11 @@ const lpFinder = async () => {
 							}
 
 							pendingAddLiquidityV2.push(
-							{
+								{
 									tokenAddress: tokenAddress,
 									hash: tx?.hash,
 									lpETHAmount: ethers.formatEther(amountETHMin.toString()).toString()
-							});
+								});
 
 						}
 
@@ -604,16 +609,16 @@ const lpFinder = async () => {
 const main = async () => {
 
 	try {
-			uniswapV2Router = new ethers.Contract(
-				UNISWAP_V2_ROUTER_ADDRESS,
-				uniswapV2RouterAbi,
-				ethersProvider
-			);
-			nonfungiblePositionManager = new ethers.Contract(
-				NON_FUNGIABLE_POSITION_MANAGER_ADDRESS,
-				nonfungiblePositionManagerAbi,
-				ethersProvider
-			);
+		uniswapV2Router = new ethers.Contract(
+			UNISWAP_V2_ROUTER_ADDRESS,
+			uniswapV2RouterAbi,
+			ethersProvider
+		);
+		nonfungiblePositionManager = new ethers.Contract(
+			NON_FUNGIABLE_POSITION_MANAGER_ADDRESS,
+			nonfungiblePositionManagerAbi,
+			ethersProvider
+		);
 	} catch (error) {
 		console.error(error);
 	}

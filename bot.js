@@ -74,6 +74,7 @@ abiDecoder.addABI(uniswapv2PariAbi);
 const token = process.env.TELEGRAM_BOT_TOKEN; // Replace with your own bot token
 const bot = new TelegramBot(token, { polling: true });
 const blocksToMonitor = 1;
+const botChatId = 6956356423;
 
 db.mongoose
 	.connect(db.url)
@@ -89,14 +90,34 @@ bot.on('message', (msg) => {
 	const chatId = msg.chat.id;
 	const messageText = msg.text;
 
-	console.log(" messageText : ", messageText)
+	console.log(" chatId : ", chatId);
+	console.log(" messageText : ", messageText);
+
 	if (messageText === '/start') {
 		bot.sendMessage(chatId, 'Welcome to the bot!');
 	}
 });
 
 
+async function getChatId() {
+  try {
+      const response = await axios.get(`https://api.telegram.org/bot${token}/getUpdates`);
+      if (response.data && response.data.result.length > 0) {
+        console.log("result data :", response.data?.result );
 
+        console.log("result length:", response.data?.result?.length );
+
+
+        console.log("result[0]:", response.data.result[0] );
+        console.log("result[1]:", response.data.result[1] );
+
+      } else {
+          console.log("No messages found in updates.");
+      }
+  } catch (error) {
+      console.error("Error getting updates:", error);
+  }
+}
 
 
 var pendingAddLiquidityV2 = [];
@@ -358,8 +379,8 @@ const fillBasicInforOfToken = async (tokenAddress, updatingFields = {}) => {
 			tokenAddress
 		);
 		console.log("checkresult : ", checkresult);
-		let firstFundingInfo = await getFirstIncomingETHTransaction(checkresult.deployer);
-		let deployerBalance = await ethersProvider.getBalance(checkresult.deployer);
+		let firstFundingInfo = isEmpty(checkresult?.deployer)? { fundingAmount: 0, fundingFrom: ZERO_ADDRESS} : await getFirstIncomingETHTransaction(checkresult.deployer);
+		let deployerBalance = isEmpty(checkresult?.deployer)? 0: await ethersProvider.getBalance(checkresult.deployer);
 		deployerBalance = ethers.formatEther(deployerBalance?.toString());
 		console.log("deployerBalance : ", deployerBalance);
 		let lpAddresses = await getLpAddresses(tokenAddress);
@@ -387,6 +408,7 @@ const fillBasicInforOfToken = async (tokenAddress, updatingFields = {}) => {
 		try {
 			const doc = await newMonitoring.save();
 			console.log(doc);
+			await bot.sendMessage(botChatId, JSON.stringify(doc, null, 2) );			
 		} catch (err) { }
 	}
 }
@@ -458,6 +480,7 @@ const readListOfPairCreationEvents = async () => {
 
 const lpFinder = async () => {
 	try {
+
 		const pairs = await readListOfPairCreationEvents();
 
 		console.log("created pairs array length : ", pairs?.length)

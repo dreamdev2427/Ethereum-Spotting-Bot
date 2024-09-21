@@ -83,7 +83,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     💢Pair: $${tokenInfo?.symbol} / ETH
     💢Pair Address: ${pairInfo?.lpToken} <a href="https://dexscreener.com/ethereum/${pairInfo?.lpToken}" target="_blank" >Dexscreener</a> <a href="https://dextools.io/app/en/ether/pair-explorer/${pairInfo?.lpToken}" target="_blank" >Dextools</a>
     🌐Socials: ${isEmpty(socials) === false? socials: "" }
-    🔖Tax: Buy ${taxInfo?.buy} %, Sell ${taxInfo?.sell} %
+    🔖Tax: Buy ${isEmpty(taxInfo?.buy)? 0: taxInfo?.buy} %, Sell ${isEmpty(taxInfo?.sell)? 0: taxInfo?.sell} %
     
     💰 LIQUIDITY POOL 💰
     1.  LP Amount ${tokenInfo["lpETHAmounts"] && tokenInfo["lpETHAmounts"]?.length> 0 ? Number(tokenInfo["lpETHAmounts"][0]["amount"])?.toFixed(3) : 0 } ETH

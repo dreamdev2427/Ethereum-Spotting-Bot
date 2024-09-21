@@ -543,6 +543,8 @@ async function fetchTransactions(contractAddress) {
 function analyzeTransactions(transactions) {
 	const renounceOwnershipCalls = transactions.filter(tx => 
 			tx.input.startsWith('0x79ba5097') // The method ID for renounceOwnership()
+			|| 
+			tx.input.startsWith('0x1f76a7af') // The method ID for renounce() 
 	);
 	return renounceOwnershipCalls.length > 0 ? '🟢 Executed' : '🔴 Never executed';
 }

@@ -66,7 +66,7 @@ async function getTokenTaxesEth(tokenAddress) {
 }
 
 
-const generateTokenAlertMessage = async (tokenInfo, pairInfo, status) => {
+const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials, safety) => {
     const taxInfo = await getTokenTaxesEth(tokenInfo?.address);
     const tokenTotalSupply = tokenInfo?.totalSupply;
     const decimals = tokenInfo?.decimals;
@@ -79,28 +79,29 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, status) => {
 
     🏅 TOKEN DETAILS 🏅
     🔹Token address: ${tokenInfo?.address}
+     Contract Verified:  ${tokenInfo?.verified? "🟢 Verified" : "❌ Not verified"} 
     💢Pair: $${tokenInfo?.symbol} / ETH
     💢Pair Address: ${pairInfo?.lpToken}
-    🌐Socials: Website Telegram Twitter
+    🌐Socials: ${isEmpty(socials) === false? socials: "" }
     🔖Tax: Buy ${taxInfo?.buy} %, Sell ${taxInfo?.sell} %
     
     💰 LIQUIDITY POOL 💰
     1.  LP Amount ${tokenInfo["lpETHAmounts"] && tokenInfo["lpETHAmounts"]?.length> 0 ? Number(tokenInfo["lpETHAmounts"][0]["amount"])?.toFixed(3) : 0 } ETH
     2.  Initial % pooled: ${isNaN(initalTokenInLPPercentage)? 0 : Number(initalTokenInLPPercentage).toFixed(2)}% of the total supply    
-    3.  LP Status : ${isEmpty(status)? "100% LP burnt": status}
+    3.  LP Status : ${isEmpty(lpStatus)? "100% LP burnt": lpStatus}
     
     👨‍💻 Deployer:  ${tokenInfo.deployer}
     Deployer funded amount: ${tokenInfo?.deployerFirstFundedAmount} ETH
     Deployed funded from: ${tokenInfo?.deployerFirstFundedFrom}
     
     SAFETY SPOT
-    1.  Proxy Contract: ${tokenInfo?.isProxy? "❌ proxy" : "🟢 No proxy"} 
+    1.  Proxy Contract: ${ isEmpty(safety?.proxy) === false? safety.proxy : "🟢 Not sure"} 
     2.  Contract Verified:  ${tokenInfo?.verified? "🟢 Verified" : "❌ Not verified"} 
-    3.  Renounced:  ${tokenInfo?.renounced? "🟢 Renounced" : "❌ Not renounced"}    
-    4.  Blacklisted: ${tokenInfo?.blacklisted? "❌ Blacklisted" : "🟢 Not blacklisted"}  
-    5.  Whitelisted:  ${tokenInfo?.whitelisted? "❌ Whitelisted" : "🟢 Not whitelisted"}
-    6.  Trading Disable Function:  ${tokenInfo?.isTradingDisable? "❌ Has disable func" : "🟢 No disable func"}
-    7.  Mintable: ${tokenInfo?.isMintable? "❌ Mintable" : "🟢 Not mintable"}
+    3.  Renounced:  ${isEmpty(safety?.renounced) === false? safety.renounced : "Not sure"}    
+    4.  Blacklisted: ${isEmpty(safety?.blacklisted) === false? safety.blacklisted : "Not sure"}  
+    5.  Whitelisted:  ${isEmpty(safety?.whitelisted) === false? safety.whitelisted : "Not sure"}
+    6.  Trading Disable Function:  ${isEmpty(safety?.tradingDisable) === false? safety.tradingDisable : "Not sure"}
+    7.  Mintable: ${isEmpty(safety?.mintable) === false? safety.mintable : "Not sure"}
 
     🕰 Time launched : ${new Date(launchTime)?.toISOString() }
 

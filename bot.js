@@ -520,14 +520,43 @@ async function fetchContractCode(contractAddress) {
 	}
 }
 
-function analyzeContract(sourceCode) {
+async function fetchTransactions(contractAddress) {
+	try {
+			const params = {
+					module: 'account',
+					action: 'txlist',
+					address: contractAddress,
+					startblock: 0,
+					endblock: 99999999,
+					sort: 'asc',
+					apikey: ETHERSCAN_API_KEY
+			};
+			const response = await axios.get(BASE_URL, { params });
+			return response.data.result;
+	} catch (error) {
+			console.error('Error fetching transactions:', error);
+			return [];
+	}
+}
+
+function analyzeTransactions(transactions) {
+	const renounceOwnershipCalls = transactions.filter(tx => 
+			tx.input.startsWith('0x79ba5097') // The method ID for renounceOwnership()
+	);
+	return renounceOwnershipCalls.length > 0 ? '❌ Executed' : '🟢 Never executed';
+}
+
+function analyzeContract(sourceCode, transactions) {
+	const hasRenounce = sourceCode.includes('renounceOwnership');
+  const renounceStatus = hasRenounce ? analyzeTransactions(transactions) : '🟢 Renounced';
+
 	const analysis = {
 			proxy: sourceCode.includes('proxy') ? '🔴 Proxy Detected' : '🟢 No proxy',
 			verified: '🟢 Verified', // Assuming the script is used only on verified contracts
-			renounced: sourceCode.includes('renounceOwnership') ? '❌ Not renounced' : '🟢 Renounced',
+			renounced: renounceStatus,
 			blacklisted: sourceCode.includes('blacklist') ? '❌ Blacklisted' : '🟢 Not blacklisted',
 			whitelisted: sourceCode.includes('whitelist') ? '❌ Whitelisted' : '🟢 Not whitelisted',
-			tradingDisable: sourceCode.includes('disableTrading') ? '❌ Trading Disable Function' : '🟢 No disable func',
+			tradingDisable: sourceCode.includes('disableTrading') ? '❌ Has disable func' : '🟢 No disable func',
 			mintable: sourceCode.includes('mint') ? '❌ Mintable' : '🟢 Not mintable'
 	};
 	return analysis;
@@ -570,12 +599,14 @@ const analyzePair = async (pairOne) => {
 		let tokenDoc = await MonitoringToken.findOne({ address: new RegExp('^' + pairOne.tokenA + '$', 'i') });
 		//add code for analyze token and pair at here
 		/* Read verified token smart contract from chain and do analyze  */
+		let socials, safety;
 		if(tokenDoc?.verified){
 			const sourceCode = await fetchContractCode(tokenDoc?.address);
 			if (sourceCode) {
-					const analysis = analyzeContract(sourceCode);
-					const socials = extractSocials(sourceCode);
-					printAnalysis(analysis, socials);
+				const transactions = await fetchTransactions(tokenDoc?.address);
+					safety = analyzeContract(sourceCode, transactions);
+					socials = extractSocials(sourceCode);
+					printAnalysis(safety, socials);
 			}
 		}
 		/* Reading LP lock, burn status  */
@@ -584,7 +615,7 @@ const analyzePair = async (pairOne) => {
 		console.log("deadBalance : ", deadBalance?.toString())
 		const zeroBalance = await pairContract.balanceOf(ZERO_ADDRESS);
 		console.log("zeroBalance : ", zeroBalance?.toString())
-		const burnBalance = BigInt(deadBalance?.toString()) >= BigInt(zeroBalance?.toString())? deadBalance : zeroBalance;
+		const burnBalance = BigInt(deadBalance?.toString()) + BigInt(zeroBalance?.toString());
 		console.log("burnBalance : ", burnBalance?.toString())
 		const deployerBalance = await pairContract.balanceOf(tokenDoc?.deployer);
 		const lpTotalSupply = await pairContract.totalSupply();
@@ -616,9 +647,8 @@ const analyzePair = async (pairOne) => {
 
 		console.log("Burn or lock status : ", status);
 
-
 		//finally after the end of analyzing, print result to Telegram		
-		const reportMessage = await generateTokenAlertMessage(tokenDoc, pairOne, status);
+		const reportMessage = await generateTokenAlertMessage(tokenDoc, pairOne, status, socials, safety);
 		bot.sendMessage(botChatId, reportMessage);
 		bot.sendMessage("@chainsendspotbot", reportMessage);
 

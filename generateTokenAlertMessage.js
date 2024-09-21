@@ -95,7 +95,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     Deployed funded from: <a href="https://etherscan.io/address/${tokenInfo?.deployerFirstFundedFrom}" target="_blank" >${tokenInfo?.deployerFirstFundedFrom}</a> 
     
     SAFETY SPOT
-    1.  Proxy Contract: ${ isEmpty(safety?.proxy) === false? safety.proxy : "🟢 Not sure"} 
+    1.  Proxy Contract: ${ isEmpty(safety?.proxy) === false? safety.proxy : "Not sure"} 
     2.  Contract Verified:  ${tokenInfo?.verified? "🟢 Verified" : "❌ Not verified"} 
     3.  Renounced:  ${isEmpty(safety?.renounced) === false? safety.renounced : "Not sure"}    
     4.  Blacklisted: ${isEmpty(safety?.blacklisted) === false? safety.blacklisted : "Not sure"}  

@@ -74,14 +74,14 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     const initalTokenInLPPercentage = Number(initalTokenInLP) / tokenTotalSupply * 100;    
     const launchTime = tokenInfo["lpETHAmounts"][0]["timestamp"];
 
-    return `<span>
+    return `
     ChainSend Spotting bot | ${tokenInfo?.name} |
 
     🏅 TOKEN DETAILS 🏅
-    🔹Token address: ${tokenInfo?.address}
+    🔹Token address: <a href="https://etherscan.io/address/${tokenInfo?.address}" target="_blank" >${tokenInfo?.address}</a> 
      Contract Verified:  ${tokenInfo?.verified? "🟢 Verified" : "❌ Not verified"} 
     💢Pair: $${tokenInfo?.symbol} / ETH
-    💢Pair Address: ${pairInfo?.lpToken}
+    💢Pair Address: ${pairInfo?.lpToken} <a href="https://dexscreener.com/ethereum/${pairInfo?.lpToken}" target="_blank" >Dexscreener</a> <a href="https://dextools.io/app/en/ether/pair-explorer/${pairInfo?.lpToken}" target="_blank" >Dextools</a>
     🌐Socials: ${isEmpty(socials) === false? socials: "" }
     🔖Tax: Buy ${taxInfo?.buy} %, Sell ${taxInfo?.sell} %
     
@@ -108,7 +108,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     Bundle CA:  ${tokenInfo?.bundled? "❌ Bundled": "🟢 Not bundled"}
     
     SNIPE:  Banana, GEEK, Alfred, Maestro, Signma.
-    </span>
+    
     `;
 }
 

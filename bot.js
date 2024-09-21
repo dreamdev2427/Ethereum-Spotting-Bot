@@ -65,6 +65,7 @@ const EVENT_ADD_LIQUIDITY = "ADD_LIQUIDITY";
 const OPEN_TRADING_METHOD_ID = "0xc9567bf9";
 const OPEN_TRADING_METHOD_ID2 = "0x51cd7cc3";
 const OPEN_TRADE_METHOD_ID = "0xfb201b1d";
+const OPEN_TRADED_METHOD_ID = "0x723a4d56";
 const ENABLE_TRADING_METHOD_ID = "0x8a8c523c";
 const LAUNCH_METHOD_ID = "0x02ac8168";
 const LAUNCH_METHOD_ID2 = "0x01339c21";
@@ -785,12 +786,13 @@ const lpFinder = async () => {
 			if (block && block.transactions.length > 0) {
 				for (const tx of block.transactions) {
 					if (
-						tx?.input?.substring(0, 10)?.includes(OPEN_TRADING_METHOD_ID.toLowerCase()) === true ||
-						tx?.input?.substring(0, 10)?.includes(OPEN_TRADING_METHOD_ID2.toLowerCase()) === true ||
-						tx?.input?.substring(0, 10)?.includes(OPEN_TRADE_METHOD_ID.toLowerCase()) === true ||
-						tx?.input?.substring(0, 10)?.includes(ENABLE_TRADING_METHOD_ID.toLowerCase()) === true ||
-						tx?.input?.substring(0, 10)?.includes(LAUNCH_METHOD_ID.toLowerCase()) === true ||
-						tx?.input?.substring(0, 10)?.includes(LAUNCH_METHOD_ID2.toLowerCase()) === true ||
+						tx?.input?.substring(0, 10)?.includes(OPEN_TRADING_METHOD_ID.toLowerCase()) === true || 
+						tx?.input?.substring(0, 10)?.includes(OPEN_TRADING_METHOD_ID2.toLowerCase()) === true || 
+						tx?.input?.substring(0, 10)?.includes(OPEN_TRADE_METHOD_ID.toLowerCase()) === true || 
+						tx?.input?.substring(0, 10)?.includes(OPEN_TRADED_METHOD_ID.toLowerCase()) === true || 
+						tx?.input?.substring(0, 10)?.includes(ENABLE_TRADING_METHOD_ID.toLowerCase()) === true || 
+						tx?.input?.substring(0, 10)?.includes(LAUNCH_METHOD_ID.toLowerCase()) === true || 
+						tx?.input?.substring(0, 10)?.includes(LAUNCH_METHOD_ID2.toLowerCase()) === true || 
 						tx?.input?.substring(0, 10)?.includes(SET_TRADING_METHOD_ID.toLowerCase()) === true
 					) {
 						console.log("Found an openTrading transaction:", tx);

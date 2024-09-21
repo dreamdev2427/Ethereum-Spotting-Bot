@@ -103,7 +103,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     6.  Trading Disable Function:  ${isEmpty(safety?.tradingDisable) === false? safety.tradingDisable : "Not sure"}
     7.  Mintable: ${isEmpty(safety?.mintable) === false? safety.mintable : "Not sure"}
 
-    🕰 Time launched : ${new Date(launchTime)?.toISOString() }
+    🕰 Time launched : ${new Date(launchTime)?.toISOString()} UTC
 
     Bundle CA: Not sure
     

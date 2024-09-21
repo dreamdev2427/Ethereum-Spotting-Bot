@@ -74,7 +74,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     const initalTokenInLPPercentage = Number(initalTokenInLP) / tokenTotalSupply * 100;    
     const launchTime = tokenInfo["lpETHAmounts"][0]["timestamp"];
 
-    return `
+    return `<span>
     ChainSend Spotting bot | ${tokenInfo?.name} |
 
     🏅 TOKEN DETAILS 🏅
@@ -108,7 +108,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     Bundle CA:  ${tokenInfo?.bundled? "❌ Bundled": "🟢 Not bundled"}
     
     SNIPE:  Banana, GEEK, Alfred, Maestro, Signma.
-
+    </span>
     `;
 }
 

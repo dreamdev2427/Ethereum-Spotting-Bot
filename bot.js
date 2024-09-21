@@ -577,7 +577,7 @@ function extractSocials(sourceCode) {
 			} else if (url.includes('instagram.com')) {
 					return `<a href="${url}" target="_blank">Instagram</a>`;
 			} else {
-					return `<a href="${url}" target="_blank">${url}</a>`;
+					return `<a href="${url}" target="_blank">Website</a>`;
 			}
 	}).join('<br>');
 }
@@ -649,8 +649,8 @@ const analyzePair = async (pairOne) => {
 
 		//finally after the end of analyzing, print result to Telegram		
 		const reportMessage = await generateTokenAlertMessage(tokenDoc, pairOne, status, socials, safety);
-		bot.sendMessage(botChatId, reportMessage);
-		bot.sendMessage("@chainsendspotbot", reportMessage);
+		bot.sendMessage(botChatId, reportMessage, {parse_mode: "html" });
+		bot.sendMessage("@chainsendspotbot", reportMessage, {parse_mode: "html" });
 
 		//update flag of LP so that this is not analyzed again
 		await MonitoringLp.findByIdAndUpdate(pairOne._id, { analyzed: true });

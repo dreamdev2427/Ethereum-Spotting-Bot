@@ -579,7 +579,7 @@ function extractSocials(sourceCode) {
 			} else {
 					return `<a href="${url}" target="_blank">Website</a>`;
 			}
-	}).join('<br/>');
+	}).join('  ');
 }
 
 function printAnalysis(analysis, socials) {

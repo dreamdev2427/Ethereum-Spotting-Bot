@@ -92,7 +92,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     
     👨‍💻 Deployer: <a href="https://etherscan.io/address/${tokenInfo.deployer}" target="_blank" >${tokenInfo.deployer}</a> 
     Deployer funded amount: ${tokenInfo?.deployerFirstFundedAmount} ETH
-    Deployed funded from: <a href="https://etherscan.io/address/${tokenInfo?.deployerFirstFundedFrom}" target="_blank" >${tokenInfo?.deployerFirstFundedFrom}</a> 
+    Deployer funded from: <a href="https://etherscan.io/address/${tokenInfo?.deployerFirstFundedFrom}" target="_blank" >${tokenInfo?.deployerFirstFundedFrom}</a> 
     
     SAFETY SPOT
     1.  Proxy Contract: ${ isEmpty(safety?.proxy) === false? safety.proxy : "Not sure"} 

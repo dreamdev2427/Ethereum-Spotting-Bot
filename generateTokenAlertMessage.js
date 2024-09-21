@@ -92,7 +92,6 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, status) => {
     👨‍💻 Deployer:  ${tokenInfo.deployer}
     Deployer funded amount: ${tokenInfo?.deployerFirstFundedAmount} ETH
     Deployed funded from: ${tokenInfo?.deployerFirstFundedFrom}
-    Bundle CA:  ${tokenInfo?.bundled? "❌ Bundled": "🟢 Not bundled"}
     
     SAFETY SPOT
     1.  Proxy Contract: ${tokenInfo?.isProxy? "❌ proxy" : "🟢 No proxy"} 
@@ -105,6 +104,8 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, status) => {
 
     🕰 Time launched : ${new Date(launchTime)?.toISOString() }
 
+    Bundle CA:  ${tokenInfo?.bundled? "❌ Bundled": "🟢 Not bundled"}
+    
     SNIPE:  Banana, GEEK, Alfred, Maestro, Signma.
 
     `;

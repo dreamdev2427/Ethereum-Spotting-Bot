@@ -504,6 +504,63 @@ const readListOfPairCreationEvents = async () => {
 	}
 }
 
+async function fetchContractCode(contractAddress) {
+	try {
+			const params = {
+					module: 'contract',
+					action: 'getsourcecode',
+					address: contractAddress,
+					apikey: ETHERSCAN_API_KEY
+			};
+			const response = await axios.get(BASE_URL, { params });
+			return response.data.result[0].SourceCode;
+	} catch (error) {
+			console.error('Error fetching contract code:', error);
+			return null;
+	}
+}
+
+function analyzeContract(sourceCode) {
+	const analysis = {
+			proxy: sourceCode.includes('proxy') ? '🔴 Proxy Detected' : '🟢 No proxy',
+			verified: '🟢 Verified', // Assuming the script is used only on verified contracts
+			renounced: sourceCode.includes('renounceOwnership') ? '❌ Not renounced' : '🟢 Renounced',
+			blacklisted: sourceCode.includes('blacklist') ? '❌ Blacklisted' : '🟢 Not blacklisted',
+			whitelisted: sourceCode.includes('whitelist') ? '❌ Whitelisted' : '🟢 Not whitelisted',
+			tradingDisable: sourceCode.includes('disableTrading') ? '❌ Trading Disable Function' : '🟢 No disable func',
+			mintable: sourceCode.includes('mint') ? '❌ Mintable' : '🟢 Not mintable'
+	};
+	return analysis;
+}
+
+function extractSocials(sourceCode) {
+	const urlRegex = /(https?:\/\/[^\s]+)/g;
+	let urls = sourceCode.match(urlRegex) || [];
+	return urls.map(url => {
+			if (url.includes('truthsocial.com')) {
+					return `<a href="${url}" target="_blank">TruthSocial</a>`;
+			} else if (url.includes('t.me')) {
+					return `<a href="${url}" target="_blank">Telegram</a>`;
+			} else if (url.includes('twitter.com') || url.includes('x.com')) {
+					return `<a href="${url}" target="_blank">X</a>`;
+			} else if (url.includes('discord.gg') || url.includes('discord.com')) {
+					return `<a href="${url}" target="_blank">Discord</a>`;
+			} else if (url.includes('instagram.com')) {
+					return `<a href="${url}" target="_blank">Instagram</a>`;
+			} else {
+					return `<a href="${url}" target="_blank">${url}</a>`;
+			}
+	}).join('<br>');
+}
+
+function printAnalysis(analysis, socials) {
+	console.log(`🌐Socials: ${socials}`);
+	console.log(`SAFETY SPOT`);
+	Object.entries(analysis).forEach(([key, value]) => {
+			console.log(`    ${key}: ${value}`);
+	});
+}
+
 const analyzePair = async (pairOne) => {
 	try {
 		if (isEmpty(pairsOnAnalyze.get(pairOne._id.toString()))) return;
@@ -512,16 +569,33 @@ const analyzePair = async (pairOne) => {
 
 		let tokenDoc = await MonitoringToken.findOne({ address: new RegExp('^' + pairOne.tokenA + '$', 'i') });
 		//add code for analyze token and pair at here
+		/* Read verified token smart contract from chain and do analyze  */
+		if(tokenDoc?.verified){
+			const sourceCode = await fetchContractCode(tokenDoc?.address);
+			if (sourceCode) {
+					const analysis = analyzeContract(sourceCode);
+					const socials = extractSocials(sourceCode);
+					printAnalysis(analysis, socials);
+			}
+		}
 		/* Reading LP lock, burn status  */
 		const pairContract = new ethers.Contract(pairOne?.lpToken, erc20Abi, ethersProvider);
-		const burnBalance = await pairContract.balanceOf(DEAD_ADDRESS);
+		const deadBalance = await pairContract.balanceOf(DEAD_ADDRESS);
+		console.log("deadBalance : ", deadBalance?.toString())
+		const zeroBalance = await pairContract.balanceOf(ZERO_ADDRESS);
+		console.log("zeroBalance : ", zeroBalance?.toString())
+		const burnBalance = BigInt(deadBalance?.toString()) >= BigInt(zeroBalance?.toString())? deadBalance : zeroBalance;
+		console.log("burnBalance : ", burnBalance?.toString())
 		const deployerBalance = await pairContract.balanceOf(tokenDoc?.deployer);
 		const lpTotalSupply = await pairContract.totalSupply();
+		console.log("lpTotalSupply : ", lpTotalSupply?.toString())
 
 		let status = '';
 		try {
 			const burnPercentage = BigInt(burnBalance?.toString()) * BigInt(100) / BigInt(lpTotalSupply?.toString());
+			console.log("burnPercentage : ", burnPercentage)
 			const deployerPercentage = BigInt(deployerBalance?.toString()) * BigInt(100) / BigInt(lpTotalSupply?.toString());
+			console.log("deployerPercentage : ", deployerPercentage)
 
 			// Construct the LP status
 			if (burnPercentage === 100) {
@@ -530,7 +604,7 @@ const analyzePair = async (pairOne) => {
 				status = `Burnt ${Number(burnPercentage?.toString()).toFixed(2)}% LP tokens`;
 			}
 			if (burnPercentage == 0) {
-				status = `No significant burning detected.`;
+				status = `No significant LP burning detected.`;
 			}
 			if (deployerPercentage > 0) {
 				status += `
@@ -541,6 +615,7 @@ const analyzePair = async (pairOne) => {
 		}
 
 		console.log("Burn or lock status : ", status);
+
 
 		//finally after the end of analyzing, print result to Telegram		
 		const reportMessage = await generateTokenAlertMessage(tokenDoc, pairOne, status);
@@ -587,67 +662,11 @@ const analyzeLPs = async () => {
 	}
 }
 
-const UNISWAP_PAIR_ABI = [
-	"event Mint(address indexed sender, uint amount0, uint amount1)"
-];
 
 const lpFinder = async () => {
 	try {
 
 		analyzeLPs();
-
-		// const pairsCreated = await readListOfPairCreationEvents();
-		// if (pairsCreated && pairsCreated?.length > 0) {
-		// 	for (let index = 0; index < pairsCreated?.length; index++) {
-		// 		let pareOne = pairsCreated[index];
-		// 		if (pareOne?.token0?.toLowerCase() !== WETH_ADDRESS?.toLowerCase() &&
-		// 			pareOne?.token1?.toLowerCase() !== WETH_ADDRESS?.toLowerCase()
-		// 		) continue;
-		// 		let tokenA, tokenB;
-		// 		if (pareOne?.token0?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
-		// 			tokenA = pareOne?.token1;
-		// 			tokenB = WETH_ADDRESS;
-		// 		}
-		// 		if (pareOne?.token1?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
-		// 			tokenA = pareOne?.token0;
-		// 			tokenB = WETH_ADDRESS;
-		// 		}
-		// 		let nn = new MonitoringLp({
-		// 			lpToken: pareOne?.pair,
-		// 			dexName: "UniswapV2",
-		// 			tokenA,
-		// 			tokenB
-		// 		});
-		// 		try {
-		// 			const doc = await nn.save();
-		// 			console.log(doc);
-
-		// 			const newPairContract = new ethers.Contract(pareOne?.pair, UNISWAP_PAIR_ABI, ethersProvider);
-
-		// 			newPairContract.on('Mint', async (sender, amount0, amount1) => {
-		// 				console.log("Liquidity added:", { sender, amount0, amount1 });
-
-		// 				let lpETHAmount, lpTokenAmount;
-		// 				if (pareOne?.token0?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
-		// 					lpTokenAmount = amount1;
-		// 					lpETHAmount = amount0;
-		// 				}
-		// 				if (pareOne?.token1?.toLowerCase() === WETH_ADDRESS?.toLowerCase()) {
-		// 					lpTokenAmount = amount0;
-		// 					lpETHAmount = amount1;
-		// 				}
-		// 				const obj = {
-		// 					tokenAddress: tokenA,
-		// 					lpETHAmount: ethers.formatEther(lpETHAmount.toString()).toString(),
-		// 					lpTokenAmount: lpTokenAmount?.toString(),
-		// 					timestamp: new Date().getTime()
-		// 				}
-		// 				updateLPFieldsByPendingAL(obj, pareOne?.pair);
-		// 			});
-		// 		} catch (err) { }
-
-		// 	}
-		// }
 
 		if (pendingOpenTradingV2 && pendingOpenTradingV2?.length > 0) {
 			for (let index = 0; index < pendingOpenTradingV2.length; index++) {
@@ -657,11 +676,9 @@ const lpFinder = async () => {
 				try {
 					let is_pending = await isPending(tx.hash);
 					if (!is_pending) {
-					// const trace = await ethersAlchemyProvider.send("debug_traceTransaction", [tx.hash]);
 					const trace = await ethersProvider.send("debug_traceTransaction", [tx.hash, {"tracer": "callTracer"} ]);
-					// You can inspect the trace for internal calls to addLiquidityETH
 					
-					console.log("trace:", trace);
+					// console.log("trace:", trace);
 
 					trace.calls?.forEach(call => {
 						if (call.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) {

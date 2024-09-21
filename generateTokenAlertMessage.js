@@ -81,7 +81,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     🔹Token address: <a href="https://etherscan.io/address/${tokenInfo?.address}" target="_blank" >${tokenInfo?.address}</a> 
      Contract Verified:  ${tokenInfo?.verified? "🟢 Verified" : "❌ Not verified"} 
     💢Pair: $${tokenInfo?.symbol} / ETH
-    💢Pair Address: ${pairInfo?.lpToken} <a href="https://dexscreener.com/ethereum/${pairInfo?.lpToken}" target="_blank" >Dexscreener</a> <a href="https://dextools.io/app/en/ether/pair-explorer/${pairInfo?.lpToken}" target="_blank" >Dextools</a>
+    💢Pair Address: <a href="https://etherscan.io/address/${pairInfo?.lpToken}" target="_blank" >${pairInfo?.lpToken}</a> <a href="https://dexscreener.com/ethereum/${pairInfo?.lpToken}" target="_blank" >Dexscreener</a> <a href="https://dextools.io/app/en/ether/pair-explorer/${pairInfo?.lpToken}" target="_blank" >Dextools</a>
     🌐Socials: ${isEmpty(socials) === false? socials: "" }
     🔖Tax: Buy ${isEmpty(taxInfo?.buy)? 0: taxInfo?.buy} %, Sell ${isEmpty(taxInfo?.sell)? 0: taxInfo?.sell} %
     
@@ -90,9 +90,9 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     2.  Initial % pooled: ${isNaN(initalTokenInLPPercentage)? 0 : Number(initalTokenInLPPercentage).toFixed(2)}% of the total supply    
     3.  LP Status : ${isEmpty(lpStatus)? "100% LP burnt": lpStatus}
     
-    👨‍💻 Deployer:  ${tokenInfo.deployer}
+    👨‍💻 Deployer: <a href="https://etherscan.io/address/${tokenInfo.deployer}" target="_blank" >${tokenInfo.deployer}</a> 
     Deployer funded amount: ${tokenInfo?.deployerFirstFundedAmount} ETH
-    Deployed funded from: ${tokenInfo?.deployerFirstFundedFrom}
+    Deployed funded from: <a href="https://etherscan.io/address/${tokenInfo?.deployerFirstFundedFrom}" target="_blank" >${tokenInfo?.deployerFirstFundedFrom}</a> 
     
     SAFETY SPOT
     1.  Proxy Contract: ${ isEmpty(safety?.proxy) === false? safety.proxy : "🟢 Not sure"} 
@@ -105,7 +105,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
 
     🕰 Time launched : ${new Date(launchTime)?.toISOString() }
 
-    Bundle CA:  ${tokenInfo?.bundled? "❌ Bundled": "🟢 Not bundled"}
+    Bundle CA: Not sure
     
     SNIPE:  Banana, GEEK, Alfred, Maestro, Signma.
     

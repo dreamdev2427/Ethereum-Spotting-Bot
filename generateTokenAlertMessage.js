@@ -95,18 +95,18 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     Deployer funded from: <a href="https://etherscan.io/address/${tokenInfo?.deployerFirstFundedFrom}" target="_blank" >${tokenInfo?.deployerFirstFundedFrom}</a> 
     
     SAFETY SPOT
-    1.  Proxy Contract: ${ isEmpty(safety?.proxy) === false? safety.proxy : "Not sure"} 
+    1.  Proxy Contract: ${ isEmpty(safety?.proxy) === false? safety.proxy : "Inconclusive"} 
     2.  Contract Verified:  ${tokenInfo?.verified? "🟢 Verified" : "❌ Not verified"} 
-    3.  Renounced:  ${isEmpty(safety?.renounced) === false? safety.renounced : "Not sure"}    
-    4.  Blacklisted: ${isEmpty(safety?.blacklisted) === false? safety.blacklisted : "Not sure"}  
-    5.  Whitelisted:  ${isEmpty(safety?.whitelisted) === false? safety.whitelisted : "Not sure"}
-    6.  Trading Disable Function:  ${isEmpty(safety?.tradingDisable) === false? safety.tradingDisable : "Not sure"}
-    7.  Mintable: ${isEmpty(safety?.mintable) === false? safety.mintable : "Not sure"}
+    3.  Renounced:  ${isEmpty(safety?.renounced) === false? safety.renounced : "Inconclusive"}    
+    4.  Blacklisted: ${isEmpty(safety?.blacklisted) === false? safety.blacklisted : "Inconclusive"}  
+    5.  Whitelisted:  ${isEmpty(safety?.whitelisted) === false? safety.whitelisted : "Inconclusive"}
+    6.  Trading Disable Function:  ${isEmpty(safety?.tradingDisable) === false? safety.tradingDisable : "Inconclusive"}
+    7.  Mintable: ${isEmpty(safety?.mintable) === false? safety.mintable : "Inconclusive"}
     8.  Token deployer holds (${Number(100 - initalTokenInLPPercentage)?.toFixed(2)})%: ${ (100 - initalTokenInLPPercentage)< 5? "🟢 Less than 5%" : (100 - initalTokenInLPPercentage)< 10? "🟠 Between 5 ~ 10%": `🔴 More than 10% ${(100 - initalTokenInLPPercentage) >= 70? "HIGH RISKY" : ""}` }
 
     🕰 Time launched : ${new Date(launchTime)?.toISOString()} UTC
 
-    Bundle CA: Not sure
+    Bundle CA: Inconclusive
     
     SNIPE:  Banana, GEEK, Alfred, Maestro, Signma.
     

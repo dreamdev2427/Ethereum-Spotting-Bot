@@ -87,7 +87,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     
     💰 LIQUIDITY POOL 💰
     1.  Pooled ETH Amount ${tokenInfo["lpETHAmounts"] && tokenInfo["lpETHAmounts"]?.length> 0 ? Number(tokenInfo["lpETHAmounts"][0]["amount"])?.toFixed(3) : 0 } ETH
-    2.  Pooled token % : ${isNaN(initalTokenInLPPercentage)? 0 : Number(initalTokenInLPPercentage).toFixed(2)}% of the total supply    
+    2.  Pooled token : ${isNaN(initalTokenInLPPercentage)? 0 : Number(initalTokenInLPPercentage).toFixed(2)}% of total supply ${Number(initalTokenInLPPercentage)>96? "🟢 Normal" : "🔴 Not safe" }   
     3.  LP Status : ${isEmpty(lpStatus)? "🟢 100% LP burnt": lpStatus}
     
     👨‍💻 Deployer: <a href="https://etherscan.io/address/${tokenInfo.deployer}" target="_blank" >${tokenInfo.deployer}</a> 

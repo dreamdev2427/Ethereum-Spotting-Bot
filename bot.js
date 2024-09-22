@@ -441,7 +441,7 @@ const fillBasicInforOfToken = async (tokenAddress, updatingFields = {}) => {
 			deployerFirstFundedAmount: firstFundingInfo?.fundingAmount || 0,
 			deployerFirstFundedFrom: firstFundingInfo?.fundingFrom || ZERO_ADDRESS,
 			deployerBalance: deployerBalance,
-			deployerWalletMadeTime: walletInfo?.actionTime || new Date("1970-01-01"),
+			deployerWalletMadeTime: isEmpty(walletInfo?.address)? new Date("1970-01-01"): walletInfo?.actionTime,
 			lpAddresses: lpAddresses,
 			verifiedTime: checkresult?.verifiedTime || new Date("1970-01-01"),
 			...updatingFields

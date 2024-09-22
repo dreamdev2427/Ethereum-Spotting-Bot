@@ -652,11 +652,12 @@ const analyzePair = async (pairOne) => {
 				status = `🟠 Burnt ${Number(burnPercentage?.toString()).toFixed(2)}% LP tokens`;
 			}
 			if (burnPercentage == 0) {
-				status = `🔴 No LP burn/lock found, TOKEN IS NOT SAFE`;
+				status += `
+				🔴 LP Must Be Burnt or Locked for this to be safe`;
 			}
 			if (deployerPercentage > 0) {
 				status += `
-			Deployer holds ${Number(deployerPercentage?.toString()).toFixed(2)}% of LP tokens`;
+			4.  Deployer holds ${Number(deployerPercentage?.toString()).toFixed(2)}% of LP total supply in his wallet`;
 			}
 		} catch (err) {
 			console.log(err);

@@ -689,7 +689,7 @@ const analyzeLPs = async () => {
 
 			if (isEmpty(tokenDoc)) continue;
 
-			console.log("tokenDoc.opened2TradingTime : ", tokenDoc.opened2TradingTime);
+			console.log("tokenDoc.opened2TradingTime : ", tokenDoc.opened2TradingTime, new Date()?.toString());
 			console.log(typeof tokenDoc.opened2TradingTime);
 
 			if (new Date(tokenDoc.opened2TradingTime?.toString())?.getTime() + parseInt(BUFFERING_TIME_IN_SECONDS) * 1000 < new Date().getTime()) {

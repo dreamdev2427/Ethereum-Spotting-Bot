@@ -50,6 +50,7 @@ const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 const WS_RPC_URL = process.env.WS_RPC_URL;
 const HTTP_RPC_URL = process.env.HTTP_RPC_URL;
 const HTTP_ALCHEMY_RPC_URL = process.env.ALCHEMY_RPC_URL;
+const BUFFERING_TIME_IN_SECONDS = process.env.BUFFERING_TIME_IN_SECONDS;
 const UNISWAP_V2_FACTORY_ADDRESS = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f';
 const UNISWAP_V3_FACTORY_ADDRESS = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
 const BLOCK_BUYING_DURATION = 45 * 1000; //45 second
@@ -336,6 +337,8 @@ const updateLPFieldsByPendingAL = async (pendingAl, lpAddress) => {
 	if (FoundToken) {
 		let updatingFields = {
 			lpAdded: true,
+			opened2TradingTime: new Date(pendingAl.timestamp),
+			opened2Trading: true  // because almose all tokens do open trading and add liquidity at same time
 		};
 		let currentAddresses = FoundToken["lpAddresses"] || [];
 		currentAddresses = currentAddresses.includes(lpAddress) === false ? [...currentAddresses, lpAddress] : currentAddresses;
@@ -365,7 +368,9 @@ const updateLPFieldsByPendingAL = async (pendingAl, lpAddress) => {
 		// //add this token to DB
 		fillBasicInforOfToken(pendingAl.tokenAddress, {
 			lpAdded: true,
+			opened2TradingTime: new Date(pendingAl.timestamp),
 			lpAddresses: [lpAddress],
+			opened2Trading: true,
 			lpETHAmounts: [
 				{
 					address: lpAddress,
@@ -507,62 +512,62 @@ const readListOfPairCreationEvents = async () => {
 
 async function fetchContractCode(contractAddress) {
 	try {
-			const params = {
-					module: 'contract',
-					action: 'getsourcecode',
-					address: contractAddress,
-					apikey: ETHERSCAN_API_KEY
-			};
-			const response = await axios.get(BASE_URL, { params });
-			return response.data.result[0].SourceCode;
+		const params = {
+			module: 'contract',
+			action: 'getsourcecode',
+			address: contractAddress,
+			apikey: ETHERSCAN_API_KEY
+		};
+		const response = await axios.get(BASE_URL, { params });
+		return response.data.result[0].SourceCode;
 	} catch (error) {
-			console.error('Error fetching contract code:', error);
-			return null;
+		console.error('Error fetching contract code:', error);
+		return null;
 	}
 }
 
 async function fetchTransactions(contractAddress) {
 	try {
-			const params = {
-					module: 'account',
-					action: 'txlist',
-					address: contractAddress,
-					startblock: 0,
-					endblock: 99999999,
-					sort: 'asc',
-					apikey: ETHERSCAN_API_KEY
-			};
-			const response = await axios.get(BASE_URL, { params });
-			return response.data.result;
+		const params = {
+			module: 'account',
+			action: 'txlist',
+			address: contractAddress,
+			startblock: 0,
+			endblock: 99999999,
+			sort: 'asc',
+			apikey: ETHERSCAN_API_KEY
+		};
+		const response = await axios.get(BASE_URL, { params });
+		return response.data.result;
 	} catch (error) {
-			console.error('Error fetching transactions:', error);
-			return [];
+		console.error('Error fetching transactions:', error);
+		return [];
 	}
 }
 
 function analyzeTransactions(transactions) {
-	const renounceOwnershipCalls = transactions.filter(tx => 
-			tx.input.startsWith('0x79ba5097') // The method ID for renounceOwnership(address x)
-			|| 
-			tx.input.startsWith('0x1f76a7af') // The method ID for renounce() 
-			||
-			tx.input.startsWith('0x715018a6') // The method ID for renounceOwnership()
+	const renounceOwnershipCalls = transactions.filter(tx =>
+		tx.input.startsWith('0x79ba5097') // The method ID for renounceOwnership(address x)
+		||
+		tx.input.startsWith('0x1f76a7af') // The method ID for renounce() 
+		||
+		tx.input.startsWith('0x715018a6') // The method ID for renounceOwnership()
 	);
 	return renounceOwnershipCalls.length > 0 ? '🟢 Executed' : '🔴 Never executed';
 }
 
 function analyzeContract(sourceCode, transactions) {
 	const hasRenounce = sourceCode.includes('renounceOwnership');
-  const renounceStatus = hasRenounce ? analyzeTransactions(transactions) : '🟢 Renounced';
+	const renounceStatus = hasRenounce ? analyzeTransactions(transactions) : '🟢 Renounced';
 
 	const analysis = {
-			proxy: sourceCode.includes('proxy') ? '🔴 Proxy Detected' : '🟢 No proxy',
-			verified: '🟢 Verified', // Assuming the script is used only on verified contracts
-			renounced: renounceStatus,
-			blacklisted: sourceCode.includes('blacklist') ? '❌ Blacklisted' : '🟢 Not blacklisted',
-			whitelisted: sourceCode.includes('whitelist') ? '❌ Whitelisted' : '🟢 Not whitelisted',
-			tradingDisable: sourceCode.includes('disableTrading') ? '❌ Has disable func' : '🟢 No disable func',
-			mintable: sourceCode.includes('mint') ? '❌ Mintable' : '🟢 Not mintable'
+		proxy: sourceCode.includes('proxy') ? '🔴 Proxy Detected' : '🟢 No proxy',
+		verified: '🟢 Verified', // Assuming the script is used only on verified contracts
+		renounced: renounceStatus,
+		blacklisted: sourceCode.includes('blacklist') ? '❌ Blacklisted' : '🟢 Not blacklisted',
+		whitelisted: sourceCode.includes('whitelist') ? '❌ Whitelisted' : '🟢 Not whitelisted',
+		tradingDisable: sourceCode.includes('disableTrading') ? '❌ Has disable func' : '🟢 No disable func',
+		mintable: sourceCode.includes('mint') ? '❌ Mintable' : '🟢 Not mintable'
 	};
 	return analysis;
 }
@@ -571,19 +576,19 @@ function extractSocials(sourceCode) {
 	const urlRegex = /(https?:\/\/[^\s]+)/g;
 	let urls = sourceCode.match(urlRegex) || [];
 	return urls.map(url => {
-			if (url.includes('truthsocial.com')) {
-					return `<a href="${url}" target="_blank">TruthSocial</a>`;
-			} else if (url.includes('t.me')) {
-					return `<a href="${url}" target="_blank">Telegram</a>`;
-			} else if (url.includes('twitter.com') || url.includes('x.com')) {
-					return `<a href="${url}" target="_blank">X</a>`;
-			} else if (url.includes('discord.gg') || url.includes('discord.com')) {
-					return `<a href="${url}" target="_blank">Discord</a>`;
-			} else if (url.includes('instagram.com')) {
-					return `<a href="${url}" target="_blank">Instagram</a>`;
-			} else {
-					return `<a href="${url}" target="_blank">Website</a>`;
-			}
+		if (url.includes('truthsocial.com')) {
+			return `<a href="${url}" target="_blank">TruthSocial</a>`;
+		} else if (url.includes('t.me')) {
+			return `<a href="${url}" target="_blank">Telegram</a>`;
+		} else if (url.includes('twitter.com') || url.includes('x.com')) {
+			return `<a href="${url}" target="_blank">X</a>`;
+		} else if (url.includes('discord.gg') || url.includes('discord.com')) {
+			return `<a href="${url}" target="_blank">Discord</a>`;
+		} else if (url.includes('instagram.com')) {
+			return `<a href="${url}" target="_blank">Instagram</a>`;
+		} else {
+			return `<a href="${url}" target="_blank">Website</a>`;
+		}
 	}).join('  ');
 }
 
@@ -591,7 +596,7 @@ function printAnalysis(analysis, socials) {
 	console.log(`🌐Socials: ${socials}`);
 	console.log(`SAFETY SPOT`);
 	Object.entries(analysis).forEach(([key, value]) => {
-			console.log(`    ${key}: ${value}`);
+		console.log(`    ${key}: ${value}`);
 	});
 }
 
@@ -605,13 +610,13 @@ const analyzePair = async (pairOne) => {
 		//add code for analyze token and pair at here
 		/* Read verified token smart contract from chain and do analyze  */
 		let socials, safety;
-		if(tokenDoc?.verified){
+		if (tokenDoc?.verified) {
 			const sourceCode = await fetchContractCode(tokenDoc?.address);
 			if (sourceCode) {
 				const transactions = await fetchTransactions(tokenDoc?.address);
-					safety = analyzeContract(sourceCode, transactions);
-					socials = extractSocials(sourceCode);
-					printAnalysis(safety, socials);
+				safety = analyzeContract(sourceCode, transactions);
+				socials = extractSocials(sourceCode);
+				printAnalysis(safety, socials);
 			}
 		}
 		/* Reading LP lock, burn status  */
@@ -635,12 +640,12 @@ const analyzePair = async (pairOne) => {
 
 			// Construct the LP status
 			if (burnPercentage === 100) {
-				status = `Burnt (100% LP tokens burnt)`;
+				status = `🟢 Burnt (100% LP tokens burnt)`;
 			} else if (Number(burnPercentage?.toString()) > 0 && Number(burnPercentage?.toString()) < 100) {
-				status = `Burnt ${Number(burnPercentage?.toString()).toFixed(2)}% LP tokens`;
+				status = `🟠 Burnt ${Number(burnPercentage?.toString()).toFixed(2)}% LP tokens`;
 			}
 			if (burnPercentage == 0) {
-				status = `No significant LP burning detected.`;
+				status = `🔴 No LP burn/lock found, TOKEN IS NOT SAFE`;
 			}
 			if (deployerPercentage > 0) {
 				status += `
@@ -654,8 +659,8 @@ const analyzePair = async (pairOne) => {
 
 		//finally after the end of analyzing, print result to Telegram		
 		const reportMessage = await generateTokenAlertMessage(tokenDoc, pairOne, status, socials, safety);
-		bot.sendMessage(botChatId, reportMessage, {parse_mode: "html" });
-		bot.sendMessage("@chainsendspotbot", reportMessage, {parse_mode: "html" });
+		bot.sendMessage(botChatId, reportMessage, { parse_mode: "html" });
+		bot.sendMessage("@chainsendspotbot", reportMessage, { parse_mode: "html" });
 
 		//update flag of LP so that this is not analyzed again
 		await MonitoringLp.findByIdAndUpdate(pairOne._id, { analyzed: true });
@@ -668,13 +673,13 @@ const analyzePair = async (pairOne) => {
 
 const analyzeLPs = async () => {
 	try {
-		const notAnalyzedBots = await MonitoringLp.find({ analyzed: false });
-		if (isEmpty(notAnalyzedBots)) {
+		const notAnalyzedLps = await MonitoringLp.find({ analyzed: false });
+		if (isEmpty(notAnalyzedLps)) {
 			return;
 		}
 
-		for (let index = 0; index < notAnalyzedBots.length; index++) {
-			const pairOne = notAnalyzedBots[index];
+		for (let index = 0; index < notAnalyzedLps.length; index++) {
+			const pairOne = notAnalyzedLps[index];
 
 			if (isEmpty(pairOne)) {
 				continue;
@@ -684,12 +689,16 @@ const analyzeLPs = async () => {
 
 			if (isEmpty(tokenDoc)) continue;
 
-			if (pairsOnAnalyze.get(pairOne._id.toString())) continue;
+			console.log("tokenDoc.opened2TradingTime : ", tokenDoc.opened2TradingTime);
+			console.log(typeof tokenDoc.opened2TradingTime);
 
-			pairsOnAnalyze.set(pairOne._id.toString(), true);
+			if (new Date(tokenDoc.opened2TradingTime?.toString())?.getTime() + parseInt(BUFFERING_TIME_IN_SECONDS) * 1000 < new Date().getTime()) {
+				if (pairsOnAnalyze.get(pairOne._id.toString())) continue;
 
-			analyzePair(pairOne);
+				pairsOnAnalyze.set(pairOne._id.toString(), true);
 
+				analyzePair(pairOne);
+			}
 		}
 
 	} catch (err) {
@@ -707,44 +716,44 @@ const lpFinder = async () => {
 			for (let index = 0; index < pendingOpenTradingV2.length; index++) {
 
 				const tx = pendingOpenTradingV2[index];
-				
+
 				try {
 					let is_pending = await isPending(tx.hash);
 					if (!is_pending) {
-					const trace = await ethersProvider.send("debug_traceTransaction", [tx.hash, {"tracer": "callTracer"} ]);
-					
-					// console.log("trace:", trace);
+						const trace = await ethersProvider.send("debug_traceTransaction", [tx.hash, { "tracer": "callTracer" }]);
 
-					trace.calls?.forEach(call => {
-						if (call.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) {
-							console.log("Internal UNISWAP_V2_ROUTER_ADDRESS call  detected:", call);
-							let data = parseTx(call["input"]);
+						// console.log("trace:", trace);
 
-							console.log("pending internal tx data:", data);
+						trace.calls?.forEach(call => {
+							if (call.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) {
+								console.log("Internal UNISWAP_V2_ROUTER_ADDRESS call  detected:", call);
+								let data = parseTx(call["input"]);
 
-							let methode = data[0];
-							let params = data[1];
+								console.log("pending internal tx data:", data);
 
-							if (methode === "addLiquidityETH") {
-								console.log("Found an internal addLiquidityETH transaction:", data);
+								let methode = data[0];
+								let params = data[1];
 
-								const tokenAddress = params[0].value;
-								const amountTokenDesired = params[1].value;
-								const amountETHMin = params[3].value;
+								if (methode === "addLiquidityETH") {
+									console.log("Found an internal addLiquidityETH transaction:", data);
 
-								pendingAddLiquidityV2.push(
-									{
-										tokenAddress: tokenAddress,
-										hash: tx?.hash,
-										lpETHAmount: ethers.formatEther(amountETHMin.toString()).toString(),
-										lpTokenAmount: amountTokenDesired?.toString(),
-										timestamp: new Date().getTime()
-									});
+									const tokenAddress = params[0].value;
+									const amountTokenDesired = params[1].value;
+									const amountETHMin = params[3].value;
+
+									pendingAddLiquidityV2.push(
+										{
+											tokenAddress: tokenAddress,
+											hash: tx?.hash,
+											lpETHAmount: ethers.formatEther(amountETHMin.toString()).toString(),
+											lpTokenAmount: amountTokenDesired?.toString(),
+											timestamp: new Date().getTime()
+										});
+								}
 							}
-						}
-					});
-					pendingOpenTradingV2 = pendingOpenTradingV2.filter(txItem => txItem.hash !== tx.hash);
-				}
+						});
+						pendingOpenTradingV2 = pendingOpenTradingV2.filter(txItem => txItem.hash !== tx.hash);
+					}
 				} catch (err) {
 					console.log(err);
 					pendingOpenTradingV2 = pendingOpenTradingV2.filter(txItem => txItem.hash !== tx.hash);
@@ -790,19 +799,19 @@ const lpFinder = async () => {
 			if (block && block.transactions.length > 0) {
 				for (const tx of block.transactions) {
 					if (
-						tx?.input?.substring(0, 10)?.includes(OPEN_TRADING_METHOD_ID.toLowerCase()) === true || 
-						tx?.input?.substring(0, 10)?.includes(OPEN_TRADING_METHOD_ID2.toLowerCase()) === true || 
-						tx?.input?.substring(0, 10)?.includes(OPEN_TRADE_METHOD_ID.toLowerCase()) === true || 
-						tx?.input?.substring(0, 10)?.includes(OPEN_TRADED_METHOD_ID.toLowerCase()) === true || 
-						tx?.input?.substring(0, 10)?.includes(ENABLE_TRADING_METHOD_ID.toLowerCase()) === true || 
-						tx?.input?.substring(0, 10)?.includes(LAUNCH_METHOD_ID.toLowerCase()) === true || 
-						tx?.input?.substring(0, 10)?.includes(LAUNCH_METHOD_ID2.toLowerCase()) === true || 
+						tx?.input?.substring(0, 10)?.includes(OPEN_TRADING_METHOD_ID.toLowerCase()) === true ||
+						tx?.input?.substring(0, 10)?.includes(OPEN_TRADING_METHOD_ID2.toLowerCase()) === true ||
+						tx?.input?.substring(0, 10)?.includes(OPEN_TRADE_METHOD_ID.toLowerCase()) === true ||
+						tx?.input?.substring(0, 10)?.includes(OPEN_TRADED_METHOD_ID.toLowerCase()) === true ||
+						tx?.input?.substring(0, 10)?.includes(ENABLE_TRADING_METHOD_ID.toLowerCase()) === true ||
+						tx?.input?.substring(0, 10)?.includes(LAUNCH_METHOD_ID.toLowerCase()) === true ||
+						tx?.input?.substring(0, 10)?.includes(LAUNCH_METHOD_ID2.toLowerCase()) === true ||
 						tx?.input?.substring(0, 10)?.includes(SET_TRADING_METHOD_ID.toLowerCase()) === true
 					) {
 						console.log("Found an openTrading transaction:", tx);
-						
+
 						pendingOpenTradingV2.push(
-							{								
+							{
 								hash: tx?.hash,
 								tx
 							});

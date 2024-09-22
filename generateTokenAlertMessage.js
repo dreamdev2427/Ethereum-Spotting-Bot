@@ -86,9 +86,9 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     🔖Tax: Buy ${isEmpty(taxInfo?.buy)? 0: taxInfo?.buy} %, Sell ${isEmpty(taxInfo?.sell)? 0: taxInfo?.sell} %
     
     💰 LIQUIDITY POOL 💰
-    1.  LP Amount ${tokenInfo["lpETHAmounts"] && tokenInfo["lpETHAmounts"]?.length> 0 ? Number(tokenInfo["lpETHAmounts"][0]["amount"])?.toFixed(3) : 0 } ETH
-    2.  Initial % pooled: ${isNaN(initalTokenInLPPercentage)? 0 : Number(initalTokenInLPPercentage).toFixed(2)}% of the total supply    
-    3.  LP Status : ${isEmpty(lpStatus)? "100% LP burnt": lpStatus}
+    1.  Pooled ETH Amount ${tokenInfo["lpETHAmounts"] && tokenInfo["lpETHAmounts"]?.length> 0 ? Number(tokenInfo["lpETHAmounts"][0]["amount"])?.toFixed(3) : 0 } ETH
+    2.  Pooled token % : ${isNaN(initalTokenInLPPercentage)? 0 : Number(initalTokenInLPPercentage).toFixed(2)}% of the total supply    
+    3.  LP Status : ${isEmpty(lpStatus)? "🟢 100% LP burnt": lpStatus}
     
     👨‍💻 Deployer: <a href="https://etherscan.io/address/${tokenInfo.deployer}" target="_blank" >${tokenInfo.deployer}</a> 
     Deployer funded amount: ${tokenInfo?.deployerFirstFundedAmount} ETH
@@ -102,6 +102,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     5.  Whitelisted:  ${isEmpty(safety?.whitelisted) === false? safety.whitelisted : "Not sure"}
     6.  Trading Disable Function:  ${isEmpty(safety?.tradingDisable) === false? safety.tradingDisable : "Not sure"}
     7.  Mintable: ${isEmpty(safety?.mintable) === false? safety.mintable : "Not sure"}
+    8.  Token deployer holds (${100 - initalTokenInLPPercentage}%): ${ (100 - initalTokenInLPPercentage)< 5? "🟢 Less than 5%" : (100 - initalTokenInLPPercentage)< 10? "🟠 Between 5 ~ 10%": `🔴 More than 10% ${(100 - initalTokenInLPPercentage) >= 70? "HIGH RISKY" : ""}` }
 
     🕰 Time launched : ${new Date(launchTime)?.toISOString()} UTC
 

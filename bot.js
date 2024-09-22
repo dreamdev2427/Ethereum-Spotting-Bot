@@ -389,18 +389,24 @@ async function getDeployerAddressAndBlockNumber(tokenAddress) {
 	const response = await axios.get(url);
 	const transactions = response.data.result;
 	// Assuming the first transaction is the contract deployment
-	if (transactions.length > 0) {
+	if (isEmpty(transactions) === false){
+		if(transactions?.length > 0) {
 		return {
 			address: transactions[0].from,
 			blockNumber: transactions[0].blockNumber,
 			actionTime: new Date(transactions[0].timeStamp * 1000)
 		};
-	} else {
+		} else {
+			return null;
+		}
+} else {
 		return null;
 	}
 }
 
 const fillBasicInforOfToken = async (tokenAddress, updatingFields = {}) => {
+	
+	try {
 	let tokenContract = new ethers.Contract(tokenAddress, erc20Abi, ethersProvider);
 	let symbol = await tokenContract.symbol();
 	let name = await tokenContract.name();
@@ -409,6 +415,7 @@ const fillBasicInforOfToken = async (tokenAddress, updatingFields = {}) => {
 	totalSupply = ethers.formatUnits(totalSupply?.toString(), decimals);
 
 	if (isEmpty(name) === false) {
+		
 		const checkresult = await checkVerifiedAndGetDeployer(
 			tokenAddress
 		);
@@ -439,11 +446,11 @@ const fillBasicInforOfToken = async (tokenAddress, updatingFields = {}) => {
 			verifiedTime: checkresult?.verifiedTime || new Date("1970-01-01"),
 			...updatingFields
 		});
-		try {
 			const doc = await newMonitoring.save();
 			console.log(doc);
-		} catch (err) { }
 	}
+	
+} catch (err) { console.log(err) }
 }
 
 async function getBlockRange(blocksToMonitor) {

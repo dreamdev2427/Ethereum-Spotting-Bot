@@ -83,7 +83,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     💢Pair: $${tokenInfo?.symbol} / ETH
     💢Pair Address: <a href="https://etherscan.io/address/${pairInfo?.lpToken}" target="_blank" >${pairInfo?.lpToken}</a> <a href="https://dexscreener.com/ethereum/${pairInfo?.lpToken}" target="_blank" >Dexscreener</a> <a href="https://dextools.io/app/en/ether/pair-explorer/${pairInfo?.lpToken}" target="_blank" >Dextools</a>
     🌐Socials: ${isEmpty(socials) === false? socials: "" }
-    🔖Tax: Buy ${isEmpty(taxInfo?.buy)? 0: taxInfo?.buy} %, Sell ${isEmpty(taxInfo?.sell)? 0: taxInfo?.sell} % ${!isEmpty(taxInfo?.sell) && (Number(taxInfo?.buy) >= 0 || Number(taxInfo?.sell) >= 10) ? "🔴 High taxes - Project Likely to fail Not recommended." : "🟢 Normal"}
+    🔖Tax: Buy ${isEmpty(taxInfo?.buy)? 0: taxInfo?.buy} %, Sell ${isEmpty(taxInfo?.sell)? 0: taxInfo?.sell} % ${(Number(taxInfo?.buy) >= 10 || Number(taxInfo?.sell) >= 10) ? "🔴 High taxes - Project Likely to fail Not recommended." : "🟢 Normal"}
     
     💰 LIQUIDITY POOL 💰
     1.  Pooled ETH Amount ${tokenInfo["lpETHAmounts"] && tokenInfo["lpETHAmounts"]?.length> 0 ? Number(tokenInfo["lpETHAmounts"][0]["amount"])?.toFixed(3) : 0 } ETH

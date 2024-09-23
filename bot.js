@@ -1,19 +1,17 @@
 const dotenv = require('dotenv')
-dotenv.config()
+dotenv.config();
+const fs = require('fs');
 const TelegramBot = require('node-telegram-bot-api');
 const { setIntervalAsync } = require("set-interval-async/dynamic");
-const ethUtil = require('ethereumjs-util');
-const Web3 = require("web3");
 const { ethers, JsonRpcProvider, toBeArray } = require('ethers');
 var abiDecoder = require("abi-decoder");
 const axios = require("axios");
-const BigNumber = require("bignumber.js");
+
+const imageBannerPath = './banner.jfif';
 
 const db = require("./db");
 const MonitoringToken = db.mornitoringToken;
 const MonitoringLp = db.monitoringLps;
-const ActivityOfLp = db.activityOfLps;
-const Holders = db.holders;
 
 const IUniswapV2FactoryABI = require('./abis/uniswapV2Factory.json');
 const { abi: IUniswapV3FactoryABI } = require('@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Factory.sol/IUniswapV3Factory.json');
@@ -47,7 +45,6 @@ const UNISWAP_V2_ROUTER_ADDRESS = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
 const NON_FUNGIABLE_POSITION_MANAGER_ADDRESS = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const BASE_URL = "https://api.etherscan.io/api";
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
-const WS_RPC_URL = process.env.WS_RPC_URL;
 const HTTP_RPC_URL = process.env.HTTP_RPC_URL;
 const HTTP_ALCHEMY_RPC_URL = process.env.ALCHEMY_RPC_URL;
 const BUFFERING_TIME_IN_SECONDS = process.env.BUFFERING_TIME_IN_SECONDS;
@@ -687,8 +684,9 @@ const analyzePair = async (pairOne) => {
 
 		//finally after the end of analyzing, print result to Telegram		
 		const reportMessage = await generateTokenAlertMessage(tokenDoc, pairOne, status, socials, safety);
-		bot.sendMessage(botChatId, reportMessage, { parse_mode: "html" });
+	
 		bot.sendMessage("@chainsendspotbot", reportMessage, { parse_mode: "html" });
+		bot.sendPhoto("@chainsendspotbot", imageBannerPath, { caption: "" });
 
 		//update flag of LP so that this is not analyzed again
 		await MonitoringLp.findByIdAndUpdate(pairOne._id, { analyzed: true });

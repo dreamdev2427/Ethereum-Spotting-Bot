@@ -811,10 +811,8 @@ const lpFinder = async () => {
 
 						trace.calls?.forEach(call => {
 							if (call.to.toLowerCase() === UNISWAP_V2_ROUTER_ADDRESS.toLowerCase()) {
-								console.log("Internal UNISWAP_V2_ROUTER_ADDRESS call  detected:", call);
+								
 								let data = parseTx(call["input"]);
-
-								console.log("pending internal tx data:", data);
 
 								let methode = data[0];
 								let params = data[1];

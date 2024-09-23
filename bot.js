@@ -135,7 +135,9 @@ async function getChatId() {
 
 var pendingAddLiquidityV2 = [];
 var pendingOpenTradingV2 = [];
+var pendingBurningLP = [];
 var pairsOnAnalyze = new Map();
+var tokensOnCheckVerification = new Map();
 
 
 
@@ -389,68 +391,68 @@ async function getDeployerAddressAndBlockNumber(tokenAddress) {
 	const response = await axios.get(url);
 	const transactions = response.data.result;
 	// Assuming the first transaction is the contract deployment
-	if (isEmpty(transactions) === false){
-		if(transactions?.length > 0) {
-		return {
-			address: transactions[0].from,
-			blockNumber: transactions[0].blockNumber,
-			actionTime: new Date(transactions[0].timeStamp * 1000)
-		};
+	if (isEmpty(transactions) === false) {
+		if (transactions?.length > 0) {
+			return {
+				address: transactions[0].from,
+				blockNumber: transactions[0].blockNumber,
+				actionTime: new Date(transactions[0].timeStamp * 1000)
+			};
 		} else {
 			return null;
 		}
-} else {
+	} else {
 		return null;
 	}
 }
 
 const fillBasicInforOfToken = async (tokenAddress, updatingFields = {}) => {
-	
+
 	try {
-	let tokenContract = new ethers.Contract(tokenAddress, erc20Abi, ethersProvider);
-	let symbol = await tokenContract.symbol();
-	let name = await tokenContract.name();
-	let decimals = await tokenContract.decimals();
-	let totalSupply = await tokenContract.totalSupply();
-	totalSupply = ethers.formatUnits(totalSupply?.toString(), decimals);
+		let tokenContract = new ethers.Contract(tokenAddress, erc20Abi, ethersProvider);
+		let symbol = await tokenContract.symbol();
+		let name = await tokenContract.name();
+		let decimals = await tokenContract.decimals();
+		let totalSupply = await tokenContract.totalSupply();
+		totalSupply = ethers.formatUnits(totalSupply?.toString(), decimals);
 
-	if (isEmpty(name) === false) {
-		
-		const checkresult = await checkVerifiedAndGetDeployer(
-			tokenAddress
-		);
-		console.log("checkresult : ", checkresult);
-		let firstFundingInfo = isEmpty(checkresult?.deployer) ? { fundingAmount: 0, fundingFrom: ZERO_ADDRESS } : await getFirstIncomingETHTransaction(checkresult.deployer);
-		let deployerBalance = isEmpty(checkresult?.deployer) ? 0 : await ethersProvider.getBalance(checkresult.deployer);
-		deployerBalance = ethers.formatEther(deployerBalance?.toString());
-		console.log("deployerBalance : ", deployerBalance);
-		let lpAddresses = await getLpAddresses(tokenAddress);
-		console.log("lpAddresses : ", lpAddresses);
-		let walletInfo = await getDeployerAddressAndBlockNumber(checkresult.deployer);
-		console.log("walletInfo : ", walletInfo);
+		if (isEmpty(name) === false) {
 
-		let newMonitoring = new MonitoringToken({
-			address: tokenAddress,
-			symbol: symbol,
-			name: name,
-			decimals: Number(decimals?.toString()),
-			totalSupply: Number(totalSupply?.toString()),
-			verified: checkresult.verified,
-			deployer: checkresult.deployer,
-			deployedTime: new Date(checkresult.timestamp * 1000),
-			deployerFirstFundedAmount: firstFundingInfo?.fundingAmount || 0,
-			deployerFirstFundedFrom: firstFundingInfo?.fundingFrom || ZERO_ADDRESS,
-			deployerBalance: deployerBalance,
-			deployerWalletMadeTime: isEmpty(walletInfo?.address)? new Date("1970-01-01"): walletInfo?.actionTime,
-			lpAddresses: lpAddresses,
-			verifiedTime: checkresult?.verifiedTime || new Date("1970-01-01"),
-			...updatingFields
-		});
+			const checkresult = await checkVerifiedAndGetDeployer(
+				tokenAddress
+			);
+			console.log("checkresult : ", checkresult);
+			let firstFundingInfo = isEmpty(checkresult?.deployer) ? { fundingAmount: 0, fundingFrom: ZERO_ADDRESS } : await getFirstIncomingETHTransaction(checkresult.deployer);
+			let deployerBalance = isEmpty(checkresult?.deployer) ? 0 : await ethersProvider.getBalance(checkresult.deployer);
+			deployerBalance = ethers.formatEther(deployerBalance?.toString());
+			console.log("deployerBalance : ", deployerBalance);
+			let lpAddresses = await getLpAddresses(tokenAddress);
+			console.log("lpAddresses : ", lpAddresses);
+			let walletInfo = await getDeployerAddressAndBlockNumber(checkresult.deployer);
+			console.log("walletInfo : ", walletInfo);
+
+			let newMonitoring = new MonitoringToken({
+				address: tokenAddress,
+				symbol: symbol,
+				name: name,
+				decimals: Number(decimals?.toString()),
+				totalSupply: Number(totalSupply?.toString()),
+				verified: checkresult.verified,
+				deployer: checkresult.deployer,
+				deployedTime: new Date(checkresult.timestamp * 1000),
+				deployerFirstFundedAmount: firstFundingInfo?.fundingAmount || 0,
+				deployerFirstFundedFrom: firstFundingInfo?.fundingFrom || ZERO_ADDRESS,
+				deployerBalance: deployerBalance,
+				deployerWalletMadeTime: isEmpty(walletInfo?.address) ? new Date("1970-01-01") : walletInfo?.actionTime,
+				lpAddresses: lpAddresses,
+				verifiedTime: checkresult?.verifiedTime || new Date("1970-01-01"),
+				...updatingFields
+			});
 			const doc = await newMonitoring.save();
 			console.log(doc);
-	}
-	
-} catch (err) { console.log(err) }
+		}
+
+	} catch (err) { console.log(err) }
 }
 
 async function getBlockRange(blocksToMonitor) {
@@ -607,6 +609,23 @@ function printAnalysis(analysis, socials) {
 	});
 }
 
+async function isContractVerified(contractAddress) {
+	try {
+		const url = `https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${contractAddress}&apikey=${ETHERSCAN_API_KEY}`;
+		const response = await axios.get(url);
+
+		if (response.data.status === '1' && response.data.result[0].SourceCode !== '') {
+
+			return true;
+		} else {
+			return false;
+		}
+	} catch (error) {
+		console.error('Error fetching contract data:', error.message);
+		return false;
+	}
+}
+
 const analyzePair = async (pairOne) => {
 	try {
 		if (isEmpty(pairsOnAnalyze.get(pairOne._id.toString()))) return;
@@ -679,6 +698,64 @@ const analyzePair = async (pairOne) => {
 	}
 }
 
+const checkATokenNotVerified = async (tokenOne) => {
+	try {
+		let targetToken = tokenOne.address;
+		let isVerified = await isContractVerified(targetToken);
+		await MonitoringToken.findByIdAndUpdate(tokenOne._id, isVerified === true ? {
+			verified: isVerified,
+			verifiedTime: new Date(),
+			opened2TradingTime: new Date()
+		} : { verified: false }).then(async () => {
+			if (isVerified === true) {
+				// find lps that has this token address in 
+				const lpsHasThisToken = await MonitoringLp.find({
+					tokenA: new RegExp('^' + targetToken + '$', 'i')
+				});
+				if (isEmpty(lpsHasThisToken) === false) {
+					if (lpsHasThisToken?.length > 0) {
+						for (let index = 0; index < lpsHasThisToken?.length; index++) {
+							const lpToken = lpsHasThisToken[index];
+							await MonitoringLp?.findByIdAndUpdate(lpToken?._id, { analyzed: false });
+							tokensOnCheckVerification.delete(tokenOne._id.toString());
+						}
+					}
+				}
+			}
+		}).catch((error => {
+			console.error(error);
+		}));
+	} catch (err) {
+		console.log(err);
+	}
+}
+
+const checkTokensNotVerified = async () => {
+	try {
+		//get list of un verified tokens
+		let notVerifiedTokens = await MonitoringToken.find({
+			verified: { $in: [null, false] },
+			opened2Trading: true
+		});
+		if (notVerifiedTokens && notVerifiedTokens?.length > 0) {
+			for (let index = 0; index < notVerifiedTokens?.length; index++) {
+				try {
+					if (tokensOnCheckVerification.get(notVerifiedTokens[index]._id.toString())) continue;
+
+					tokensOnCheckVerification.set(notVerifiedTokens[index]._id.toString(), true);
+
+					checkATokenNotVerified(notVerifiedTokens[index]);
+				} catch (err) {
+					console.error(err);
+				}
+			}
+		}
+
+	} catch (err) {
+		console.log(err);
+	}
+}
+
 const analyzeLPs = async () => {
 	try {
 		const notAnalyzedLps = await MonitoringLp.find({ analyzed: false });
@@ -696,8 +773,6 @@ const analyzeLPs = async () => {
 			const tokenDoc = await MonitoringToken.findOne({ address: new RegExp('^' + pairOne.tokenA + '$', 'i') });
 
 			if (isEmpty(tokenDoc)) continue;
-
-			console.log("tokenDoc.opened2TradingTime : ", tokenDoc.opened2TradingTime, new Date()?.toString());
 
 			if (new Date(tokenDoc.opened2TradingTime?.toString())?.getTime() + parseInt(BUFFERING_TIME_IN_SECONDS) * 1000 < new Date().getTime()) {
 				if (pairsOnAnalyze.get(pairOne._id.toString())) continue;
@@ -718,6 +793,8 @@ const lpFinder = async () => {
 	try {
 
 		analyzeLPs();
+
+		checkTokensNotVerified();
 
 		if (pendingOpenTradingV2 && pendingOpenTradingV2?.length > 0) {
 			for (let index = 0; index < pendingOpenTradingV2.length; index++) {
@@ -799,6 +876,43 @@ const lpFinder = async () => {
 			}
 		}
 
+		if (pendingBurningLP && pendingBurningLP?.length > 0) {
+			for (let index = 0; index < pendingBurningLP.length; index++) {
+				const burningLp = pendingBurningLP[index];
+				try {
+					let is_pending = await isPending(burningLp.txHash);
+					if (!is_pending) {
+						let token = burningLp.tokenAddress;
+						let foundToken = await MonitoringToken.findOne({
+							address: new RegExp('^' + token + '$', 'i'),
+							opened2Trading: true
+						});
+						if (foundToken) {
+
+							let nowTime = new Date();
+							MonitoringToken.findByIdAndUpdate(foundToken?._id, {
+								lpLockedLastTime: nowTime,
+								lpLockedLastDueTime: nowTime,
+								lpLastActivityName: burningLp?.activityName,
+								lpLockedRate: parseFloat(lpLockedRate).toFixed(2),
+								lpLastLockedHash: burningLp?.txHash,
+								opened2TradingTime: new Date()
+							}).then(doc => {
+
+							}).catch(err => { });
+
+						}
+
+						pendingBurningLP = pendingBurningLP.filter(txItem => txItem.txHash !== burningLp.txHash);
+
+					}
+				} catch (err) {
+					pendingBurningLP = pendingBurningLP.filter(txItem => txItem.txHash !== burningLp.txHash);
+					console.error(err);
+				}
+			}
+		}
+
 		try {
 			// Get the pending block
 			const block = await ethersProvider.send("eth_getBlockByNumber", ["pending", true]);
@@ -822,6 +936,46 @@ const lpFinder = async () => {
 								hash: tx?.hash,
 								tx
 							});
+
+					}
+					if (
+						tx?.input?.substring(0, 10)?.includes(TRANSFER_METHOD_ID.toLowerCase()) === true
+					) {
+						try {
+							let data = parseTx(tx["input"]);
+							let methode = data[0];
+							let burnTokenParams = data[1];
+							if (methode === "transfer") {
+								// Check if the recipient is the dead address
+								if ((burnTokenParams[0]?.value?.toLowerCase()?.includes("dead") === true ||
+									burnTokenParams[0]?.value?.toLowerCase() === ZERO_ADDRESS?.toLowerCase())
+								) {
+									const lpTokenFound = await MonitoringLp.findOne({ lpToken: new RegExp('^' + tx.to + '$', 'i') });
+									if (lpTokenFound !== null && lpTokenFound !== undefined) {
+										if (pendingBurningLP?.findIndex(item => item.txHash === tx.hash) < 0 || pendingBurningLP?.length === 0) {
+											// Handle detected transaction                      
+											await MonitoringLp.findByIdAndUpdate(lpTokenFound?._id, {
+												analyzed: false
+											});
+											pendingBurningLP = [
+												...pendingBurningLP,
+												{
+													tokenAddress: lpTokenFound?.tokenA,
+													lpToken: tx.to,
+													activityName: "burn",
+													amount: ethers.formatEther(burnTokenParams[1]?.value?.toString()),
+													withdrawer: tx?.from,
+													txHash: tx?.hash,
+													totalSupply: lpTokenFound?.totalSupply
+												}
+											]
+										}
+									}
+								}
+							}
+						} catch (error) {
+							// console.error('Error decoding tx:', error);
+						}
 
 					}
 					// Check if the transaction is interacting with the Uniswap V2 Router

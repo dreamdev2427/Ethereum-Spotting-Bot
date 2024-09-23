@@ -142,7 +142,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
 
     CHAINSEND SCORE TO TOKEN: ${universalScore}
     
-    SNIPE:  Banana, GEEK, Alfred, Maestro, Signma.
+    SNIPE: <a href="https://t.me/BananaGunSniper12_bot?start=safe_analyzer_${tokenInfo?.address}" target="_blank" >Banana</a>, <a href="https://t.me/GeekSwapBot/app?startapp=r_699Lr_ETH_${tokenInfo?.address}"  target="_blank" >GEEK</a>, <a href="https://t.me/AlfredTradesBot?start=SafeAnalyzer==${tokenInfo?.address}" target="_blank" >Alfred</a>, <a href="https://t.me/MaestroSniperBot?start=${tokenInfo?.address}-safeanalyzer" target="_blank" >Maestro</a>, <a href="https://t.me/Sigma_buyBot?start=${tokenInfo?.address}" target="_blank" >Signma</a>.
     
     `;
 }

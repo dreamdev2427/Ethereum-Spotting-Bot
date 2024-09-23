@@ -74,6 +74,40 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     const initalTokenInLPPercentage = Number(initalTokenInLP) / tokenTotalSupply * 100;    
     const launchTime = tokenInfo["lpETHAmounts"][0]["timestamp"];
 
+    let universalScore = 0;
+    if(!isEmpty(taxInfo) && !isEmpty(taxInfo.buy) && !isEmpty(taxInfo.sell) && !((Number(taxInfo?.buy) >= 10 || Number(taxInfo?.sell) >= 10)))
+    {
+        universalScore += 10;
+    }
+    if(!isEmpty(lpStatus) && lpStatus?.toString()?.includes("🟢"))
+    {
+        universalScore += 20;   
+    }
+    if(!isEmpty(safety?.renounced) && safety?.renounced?.toString()?.includes("🟢"))
+    {
+        universalScore += 20;   
+    }
+    if(!isEmpty(tokenInfo?.verified) && tokenInfo?.verified == true )
+    {
+        universalScore += 10;   
+    }    
+    if(!isEmpty(safety?.proxy) && safety?.proxy?.toString()?.includes("🟢") )
+    {
+        universalScore += 10;   
+    }
+    if((100 - initalTokenInLPPercentage)<5)
+    {
+        universalScore += 10;         
+    }
+    if(!isEmpty(safety?.tradingDisable) && safety?.tradingDisable?.toString()?.includes("🟢") )
+    {
+        universalScore += 10;                 
+    }
+    if(!isEmpty(socials))
+    {
+        universalScore += 10;           
+    }
+
     return `
     ChainSend Spotting bot | ${tokenInfo?.name} |
 
@@ -106,7 +140,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
 
     🕰 Time launched : ${new Date(launchTime)?.toISOString()} UTC
 
-    Bundle CA: Inconclusive
+    CHAINSEND SCORE TO TOKEN: ${universalScore}
     
     SNIPE:  Banana, GEEK, Alfred, Maestro, Signma.
     

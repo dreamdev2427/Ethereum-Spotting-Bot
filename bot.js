@@ -596,7 +596,7 @@ function extractSocials(sourceCode) {
 			return `<a href="${url}" target="_blank">Discord</a>`;
 		} else if (url.includes('instagram.com')) {
 			return `<a href="${url}" target="_blank">Instagram</a>`;
-		} else {
+		} else if(!url.includes('eips.ethereum.org') && !url.includes('forum.openzeppelin.com') && !url.includes('github.com') ){
 			return `<a href="${url}" target="_blank">Website</a>`;
 		}
 	}).join('  ');
@@ -654,7 +654,7 @@ const analyzePair = async (pairOne) => {
 		console.log("zeroBalance : ", zeroBalance?.toString())
 		const burnBalance = BigInt(deadBalance?.toString()) + BigInt(zeroBalance?.toString());
 		console.log("burnBalance : ", burnBalance?.toString())
-		const deployerBalance = await pairContract.balanceOf(tokenDoc?.deployer);
+		const deployerBalance = !isEmpty(tokenDoc?.deployer)? await pairContract.balanceOf(tokenDoc?.deployer) : 0;
 		const lpTotalSupply = await pairContract.totalSupply();
 		console.log("lpTotalSupply : ", lpTotalSupply?.toString())
 
@@ -895,7 +895,6 @@ const lpFinder = async () => {
 								lpLockedLastTime: nowTime,
 								lpLockedLastDueTime: nowTime,
 								lpLastActivityName: burningLp?.activityName,
-								lpLockedRate: parseFloat(lpLockedRate).toFixed(2),
 								lpLastLockedHash: burningLp?.txHash,
 								opened2TradingTime: new Date()
 							}).then(doc => {

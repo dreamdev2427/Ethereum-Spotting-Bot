@@ -79,7 +79,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     {
         universalScore += 10;
     }
-    if(!isEmpty(lpStatus) && lpStatus?.toString()?.includes("🟢"))
+    if(!isEmpty(lpStatus) && lpStatus?.toString()?.includes("🟢") && Number(tokenInfo["lpETHAmounts"][0]["amount"]) >= 0.3 && Number(tokenInfo["lpETHAmounts"][0]["amount"]) < 5)
     {
         universalScore += 20;   
     }
@@ -87,7 +87,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     {
         universalScore += 20;   
     }
-    if(!isEmpty(tokenInfo?.verified) && tokenInfo?.verified == true )
+    if( tokenInfo?.verified == true )
     {
         universalScore += 10;   
     }    
@@ -111,6 +111,8 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     return `
     ChainSend Spotting bot | ${tokenInfo?.name} |
 
+    <h2>CHAINSEND SCORE : ${universalScore}%</h2>
+
     🏅 TOKEN DETAILS 🏅
     🔹Token address: <a href="https://etherscan.io/address/${tokenInfo?.address}" target="_blank" >${tokenInfo?.address}</a> 
      Contract Verified:  ${tokenInfo?.verified? "🟢 Verified" : "❌ Not verified"} 
@@ -120,7 +122,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     🔖Tax: Buy ${isEmpty(taxInfo?.buy)? 0: taxInfo?.buy} %, Sell ${isEmpty(taxInfo?.sell)? 0: taxInfo?.sell} % ${(Number(taxInfo?.buy) >= 10 || Number(taxInfo?.sell) >= 10) ? "🔴 High taxes - Project Likely to fail Not recommended." : "🟢 Normal"}
     
     💰 LIQUIDITY POOL 💰
-    1.  Pooled ETH Amount ${tokenInfo["lpETHAmounts"] && tokenInfo["lpETHAmounts"]?.length> 0 ? Number(tokenInfo["lpETHAmounts"][0]["amount"])?.toFixed(3) : 0 } ETH
+    1.  Pooled ETH Amount ${tokenInfo["lpETHAmounts"] && tokenInfo["lpETHAmounts"]?.length> 0 ? Number(tokenInfo["lpETHAmounts"][0]["amount"])?.toFixed(3) : 0 } ETH ${Number(tokenInfo["lpETHAmounts"][0]["amount"])?.toFixed(3)< 0.1? "🔴 Danger, insufficient LP ETH detected" :""}
     2.  Pooled token : ${isNaN(initalTokenInLPPercentage)? 0 : Number(initalTokenInLPPercentage).toFixed(2)}% of total supply ${Number(initalTokenInLPPercentage)>96? "🟢 Normal" : "🔴 Not safe" }   
     3.  LP Status : ${isEmpty(lpStatus)? "🟢 100% LP burnt": lpStatus}
     
@@ -140,7 +142,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
 
     🕰 Time launched : ${new Date(launchTime)?.toISOString()} UTC
 
-    CHAINSEND SCORE TO TOKEN: ${universalScore}
+    <h2>CHAINSEND SCORE : ${universalScore}%</h2>
     
     SNIPE: <a href="https://t.me/BananaGunSniper12_bot?start=safe_analyzer_${tokenInfo?.address}" target="_blank" >Banana</a>, <a href="https://t.me/GeekSwapBot/app?startapp=r_699Lr_ETH_${tokenInfo?.address}"  target="_blank" >GEEK</a>, <a href="https://t.me/AlfredTradesBot?start=SafeAnalyzer==${tokenInfo?.address}" target="_blank" >Alfred</a>, <a href="https://t.me/MaestroSniperBot?start=${tokenInfo?.address}-safeanalyzer" target="_blank" >Maestro</a>, <a href="https://t.me/Sigma_buyBot?start=${tokenInfo?.address}" target="_blank" >Signma</a>.
     

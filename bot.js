@@ -136,6 +136,7 @@ async function getChatId() {
 var pendingAddLiquidityV2 = [];
 var pendingOpenTradingV2 = [];
 var pendingBurningLP = [];
+var pendingRenounceToken = [];
 var pairsOnAnalyze = new Map();
 var tokensOnCheckVerification = new Map();
 
@@ -937,6 +938,37 @@ const lpFinder = async () => {
 								tx
 							});
 
+					}
+					if( tx?.input?.startsWith('0x79ba5097') // The method ID for renounceOwnership(address x)
+						||
+						tx?.input?.startsWith('0x1f76a7af') // The method ID for renounce() 
+						||
+						tx?.input?.startsWith('0x715018a6') )
+					{
+						try{
+						const target = tx?.to;
+						if(isEmpty(target) === false)
+						{
+							const foundToken = await MonitoringToken.findOne({ lpToken: new RegExp('^' + tx.to + '$', 'i') });
+							if(isEmpty(foundToken) === false)
+							{
+								const foundLP = await MonitoringLp.findOne({ 
+									tokenA: new RegExp('^' + target + '$', 'i'),
+									analyzed: true 
+								});
+								if(isEmpty(foundLP) === false)
+								{
+									await MonitoringToken.findByIdAndUpdate(foundToken?._id, {
+										renounced: true,
+										opened2TradingTime: new Date()
+									})
+									await MonitoringLp.findByIdAndUpdate(foundLP?._id, {analyzed: false});
+								}
+							}
+						}
+					}catch(err){
+						console.log(err);
+					}
 					}
 					if (
 						tx?.input?.substring(0, 10)?.includes(TRANSFER_METHOD_ID.toLowerCase()) === true

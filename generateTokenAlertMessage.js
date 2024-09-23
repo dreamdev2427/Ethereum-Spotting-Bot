@@ -140,7 +140,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     return `
     ChainSend Spotting bot | ${tokenInfo?.name} |
 
-    CHAINSEND SCORE : ${universalScore}%
+    📝CHAINSEND SCORE : ${universalScore}%📝
 
     🏅 TOKEN DETAILS 🏅
     🔹Token address: <a href="https://etherscan.io/address/${tokenInfo?.address}" target="_blank" >${tokenInfo?.address}</a> 
@@ -171,7 +171,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
 
     🕰 Launched ${timeAgo(new Date(launchTime)?.toISOString())} 
 
-    CHAINSEND SCORE : ${universalScore}%
+    📝CHAINSEND SCORE : ${universalScore}%📝
     
     SNIPE: <a href="https://t.me/BananaGunSniper12_bot?start=safe_analyzer_${tokenInfo?.address}" target="_blank" >Banana</a>, <a href="https://t.me/GeekSwapBot/app?startapp=r_699Lr_ETH_${tokenInfo?.address}"  target="_blank" >GEEK</a>, <a href="https://t.me/AlfredTradesBot?start=SafeAnalyzer==${tokenInfo?.address}" target="_blank" >Alfred</a>, <a href="https://t.me/MaestroSniperBot?start=${tokenInfo?.address}-safeanalyzer" target="_blank" >Maestro</a>, <a href="https://t.me/Sigma_buyBot?start=${tokenInfo?.address}" target="_blank" >Signma</a>.
     

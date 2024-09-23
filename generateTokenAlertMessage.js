@@ -65,6 +65,35 @@ async function getTokenTaxesEth(tokenAddress) {
     return response;
 }
 
+function timeAgo(dateString) {
+    const now = new Date();
+    const date = new Date(dateString);
+    const seconds = Math.floor((now - date) / 1000);
+  
+    const intervals = {
+      year: 31536000,
+      month: 2592000,
+      week: 604800,
+      day: 86400,
+      hour: 3600,
+      minute: 60,
+    };
+  
+    for (let interval in intervals) {
+      const duration = Math.floor(seconds / intervals[interval]);
+      if (duration >= 1) {
+        return duration === 1
+          ? `1 ${interval} ago`
+          : `${duration} ${interval}s ago`;
+      }
+    }
+  
+    return "Just now";
+  }
+  
+  // Example usage:
+//   console.log(timeAgo("2024-09-23T18:26:29.228Z")); // Will print "X mins ago", "X hrs ago", etc.
+  
 
 const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials, safety) => {
     const taxInfo = await getTokenTaxesEth(tokenInfo?.address);
@@ -111,7 +140,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     return `
     ChainSend Spotting bot | ${tokenInfo?.name} |
 
-    <h2>CHAINSEND SCORE : ${universalScore}%</h2>
+    CHAINSEND SCORE : ${universalScore}%
 
     🏅 TOKEN DETAILS 🏅
     🔹Token address: <a href="https://etherscan.io/address/${tokenInfo?.address}" target="_blank" >${tokenInfo?.address}</a> 
@@ -140,9 +169,9 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     7.  Mintable: ${isEmpty(safety?.mintable) === false? safety.mintable : "Inconclusive"}
     8.  Token deployer holds (${Number(100 - initalTokenInLPPercentage)?.toFixed(2)})%: ${ (100 - initalTokenInLPPercentage)< 5? "🟢 Less than 5%" : (100 - initalTokenInLPPercentage)< 10? "🟠 Between 5 ~ 10%": `🔴 More than 10% ${(100 - initalTokenInLPPercentage) >= 70? "HIGH RISKY" : ""}` }
 
-    🕰 Time launched : ${new Date(launchTime)?.toISOString()} UTC
+    🕰 Launched ${timeAgo(new Date(launchTime)?.toISOString())} 
 
-    <h2>CHAINSEND SCORE : ${universalScore}%</h2>
+    CHAINSEND SCORE : ${universalScore}%
     
     SNIPE: <a href="https://t.me/BananaGunSniper12_bot?start=safe_analyzer_${tokenInfo?.address}" target="_blank" >Banana</a>, <a href="https://t.me/GeekSwapBot/app?startapp=r_699Lr_ETH_${tokenInfo?.address}"  target="_blank" >GEEK</a>, <a href="https://t.me/AlfredTradesBot?start=SafeAnalyzer==${tokenInfo?.address}" target="_blank" >Alfred</a>, <a href="https://t.me/MaestroSniperBot?start=${tokenInfo?.address}-safeanalyzer" target="_blank" >Maestro</a>, <a href="https://t.me/Sigma_buyBot?start=${tokenInfo?.address}" target="_blank" >Signma</a>.
     

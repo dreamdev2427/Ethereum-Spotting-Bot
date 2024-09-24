@@ -151,7 +151,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     🔖Tax: Buy ${isEmpty(taxInfo?.buy)? 0: taxInfo?.buy} %, Sell ${isEmpty(taxInfo?.sell)? 0: taxInfo?.sell} % ${(Number(taxInfo?.buy) >= 10 || Number(taxInfo?.sell) >= 10) ? "🔴 High taxes - Project Likely to fail Not recommended." : "🟢 Normal"}
     
     💰 LIQUIDITY POOL 💰
-    1.  Pooled ETH Amount ${tokenInfo["lpETHAmounts"] && tokenInfo["lpETHAmounts"]?.length> 0 ? Number(tokenInfo["lpETHAmounts"][0]["amount"])?.toFixed(3) : 0 } ETH ${Number(tokenInfo["lpETHAmounts"][0]["amount"])?.toFixed(3)< 0.1? "🔴 Danger, insufficient LP ETH detected" :""}
+    1.  Pooled ETH Amount ${tokenInfo["lpETHAmounts"] && tokenInfo["lpETHAmounts"]?.length> 0 ? Number(tokenInfo["lpETHAmounts"][0]["amount"])?.toFixed(3) : 0 } ETH ${Number(tokenInfo["lpETHAmounts"][0]["amount"])?.toFixed(3)< 0.3? "🔴 Danger, insufficient LP ETH detected" : Number(tokenInfo["lpETHAmounts"][0]["amount"])?.toFixed(3)> 5? "🔴 Proceed with caution" : ""}
     2.  Pooled token : ${isNaN(initalTokenInLPPercentage)? 0 : Number(initalTokenInLPPercentage).toFixed(2)}% of total supply ${Number(initalTokenInLPPercentage)>96? "🟢 Normal" : "🔴 Not safe" }   
     3.  LP Status : ${isEmpty(lpStatus)? "🟢 100% LP burnt": lpStatus}
     

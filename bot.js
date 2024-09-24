@@ -686,7 +686,7 @@ const analyzePair = async (pairOne) => {
 		const reportMessage = await generateTokenAlertMessage(tokenDoc, pairOne, status, socials, safety);
 	
 		bot.sendPhoto("@chainsendspotbot", imageBannerPath, { caption: "" });
-		bot.sendMessage("@chainsendspotbot", reportMessage, { parse_mode: "html" });
+		bot.sendMessage("@chainsendspotbot", reportMessage, { parse_mode: "Markdown" });
 
 		//update flag of LP so that this is not analyzed again
 		await MonitoringLp.findByIdAndUpdate(pairOne._id, { analyzed: true });

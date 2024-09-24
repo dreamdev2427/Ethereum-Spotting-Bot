@@ -143,10 +143,10 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     📝CHAINSEND SCORE : ${universalScore}%📝
 
     🏅 TOKEN DETAILS 🏅
-    🔹Token address: <a href="https://etherscan.io/address/${tokenInfo?.address}" target="_blank" >${tokenInfo?.address}</a> 
+    🔹Token address: \`${tokenInfo?.address}\` 
      Contract Verified:  ${tokenInfo?.verified? "🟢 Verified" : "❌ Not verified"} 
     💢Pair: $${tokenInfo?.symbol} / ETH
-    💢Pair Address: <a href="https://etherscan.io/address/${pairInfo?.lpToken}" target="_blank" >${pairInfo?.lpToken}</a> <a href="https://dexscreener.com/ethereum/${pairInfo?.lpToken}" target="_blank" >Dexscreener</a> <a href="https://dextools.io/app/en/ether/pair-explorer/${pairInfo?.lpToken}" target="_blank" >Dextools</a>
+    💢Pair Address: \`${pairInfo?.lpToken}\` [Dexscreener](https://dexscreener.com/ethereum/${pairInfo?.lpToken}) [Dextools](https://dextools.io/app/en/ether/pair-explorer/${pairInfo?.lpToken})
     🌐Socials: ${isEmpty(socials) === false? socials: "" }
     🔖Tax: Buy ${isEmpty(taxInfo?.buy)? 0: taxInfo?.buy} %, Sell ${isEmpty(taxInfo?.sell)? 0: taxInfo?.sell} % ${(Number(taxInfo?.buy) >= 10 || Number(taxInfo?.sell) >= 10) ? "🔴 High taxes - Project Likely to fail Not recommended." : "🟢 Normal"}
     
@@ -155,9 +155,9 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     2.  Pooled token : ${isNaN(initalTokenInLPPercentage)? 0 : Number(initalTokenInLPPercentage).toFixed(2)}% of total supply ${Number(initalTokenInLPPercentage)>96? "🟢 Normal" : "🔴 Not safe" }   
     3.  LP Status : ${isEmpty(lpStatus)? "🟢 100% LP burnt": lpStatus}
     
-    👨‍💻 Deployer: <a href="https://etherscan.io/address/${tokenInfo.deployer}" target="_blank" >${tokenInfo.deployer}</a> 
+    👨‍💻 Deployer: \`${tokenInfo.deployer}\`
     Deployer funded amount: ${tokenInfo?.deployerFirstFundedAmount} ETH
-    Deployer funded from: <a href="https://etherscan.io/address/${tokenInfo?.deployerFirstFundedFrom}" target="_blank" >${tokenInfo?.deployerFirstFundedFrom}</a> 
+    Deployer funded from: \`${tokenInfo?.deployerFirstFundedFrom}\`
     
     SAFETY SPOT
     1.  Proxy Contract: ${ isEmpty(safety?.proxy) === false? safety.proxy : "Inconclusive"} 
@@ -173,7 +173,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
 
     📝CHAINSEND SCORE : ${universalScore}%📝
     
-    SNIPE: <a href="https://t.me/BananaGunSniper12_bot?start=safe_analyzer_${tokenInfo?.address}" target="_blank" >Banana</a>, <a href="https://t.me/GeekSwapBot/app?startapp=r_699Lr_ETH_${tokenInfo?.address}"  target="_blank" >GEEK</a>, <a href="https://t.me/AlfredTradesBot?start=SafeAnalyzer==${tokenInfo?.address}" target="_blank" >Alfred</a>, <a href="https://t.me/MaestroSniperBot?start=${tokenInfo?.address}-safeanalyzer" target="_blank" >Maestro</a>, <a href="https://t.me/Sigma_buyBot?start=${tokenInfo?.address}" target="_blank" >Signma</a>.
+    SNIPE: [Banana](https://t.me/BananaGunSniper12_bot?start=safe_analyzer_${tokenInfo?.address}), [GEEK](https://t.me/GeekSwapBot/app?startapp=r_699Lr_ETH_${tokenInfo?.address}), [Alfred](https://t.me/AlfredTradesBot?start=SafeAnalyzer==${tokenInfo?.address}), [Maestro](https://t.me/MaestroSniperBot?start=${tokenInfo?.address}-safeanalyzer), [Sigma](https://t.me/Sigma_buyBot?start=${tokenInfo?.address})
     
     `;
 }

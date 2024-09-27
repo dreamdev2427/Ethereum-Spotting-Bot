@@ -580,24 +580,26 @@ function analyzeContract(sourceCode, transactions) {
 }
 
 function extractSocials(sourceCode) {
-	const urlRegex = /(https?:\/\/[^\s]+)/g;
-	let urls = sourceCode.match(urlRegex) || [];
-	return urls.map(url => {
-		if (url.includes('truthsocial.com')) {
-			return `<a href="${url}" target="_blank">TruthSocial</a>`;
-		} else if (url.includes('t.me')) {
-			return `<a href="${url}" target="_blank">Telegram</a>`;
-		} else if (url.includes('twitter.com') || url.includes('x.com')) {
-			return `<a href="${url}" target="_blank">X</a>`;
-		} else if (url.includes('discord.gg') || url.includes('discord.com')) {
-			return `<a href="${url}" target="_blank">Discord</a>`;
-		} else if (url.includes('instagram.com')) {
-			return `<a href="${url}" target="_blank">Instagram</a>`;
-		} else if(!url.includes('eips.ethereum.org') && !url.includes('forum.openzeppelin.com') && !url.includes('github.com') ){
-			return `<a href="${url}" target="_blank">Website</a>`;
-		}
-	}).join('  ');
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    let urls = sourceCode.match(urlRegex) || [];
+    return urls.map(url => {
+        const name = url.match(/:\/\/(www\.)?([^\/]+)/)[2];
+        if (url.includes('truthsocial.com')) {
+            return `[TruthSocial](${url})`;
+        } else if (url.includes('t.me')) {
+            return `[Telegram](${url})`;
+        } else if (url.includes('twitter.com') || url.includes('x.com')) {
+            return `[X](${url})`;
+        } else if (url.includes('discord.gg') || url.includes('discord.com')) {
+            return `[Discord](${url})`;
+        } else if (url.includes('instagram.com')) {
+            return `[Instagram](${url})`;
+        } else if (!url.includes('eips.ethereum.org') && !url.includes('forum.openzeppelin.com') && !url.includes('github.com')) {
+            return `[${name}](${url})`; // Fallback for generic websites using the domain name as label
+        }
+    }).join('  ');
 }
+
 
 function printAnalysis(analysis, socials) {
 	console.log(`🌐Socials: ${socials}`);

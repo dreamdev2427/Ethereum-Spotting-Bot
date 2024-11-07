@@ -138,9 +138,9 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
     }
 
     return `
-    ChainSend Spotting bot | ${tokenInfo?.name} |
+    Rocket Spotting bot | ${tokenInfo?.name} |
 
-    📝CHAINSEND SCORE : ${universalScore}%📝
+    ROCKET SCORE : ${universalScore}%📝
 
     🏅 TOKEN DETAILS 🏅
     🔹Token address: \`${tokenInfo?.address}\` 
@@ -171,7 +171,7 @@ const generateTokenAlertMessage = async (tokenInfo, pairInfo, lpStatus, socials,
 
     🕰 Launched ${timeAgo(new Date(launchTime)?.toISOString())} 
 
-    📝CHAINSEND SCORE : ${universalScore}%📝
+    ROCKET SCORE : ${universalScore}%📝
     
     SNIPE: [Banana](https://t.me/BananaGunSniper12_bot?start=safe_analyzer_${tokenInfo?.address}), [GEEK](https://t.me/GeekSwapBot/app?startapp=r_699Lr_ETH_${tokenInfo?.address}), [Alfred](https://t.me/AlfredTradesBot?start=SafeAnalyzer==${tokenInfo?.address}), [Maestro](https://t.me/MaestroSniperBot?start=${tokenInfo?.address}-safeanalyzer), [Sigma](https://t.me/Sigma_buyBot?start=${tokenInfo?.address})
     

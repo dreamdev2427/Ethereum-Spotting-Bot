@@ -84,7 +84,6 @@ abiDecoder.addABI(uniswapv2PariAbi);
 const token = process.env.TELEGRAM_BOT_TOKEN; // Replace with your own bot token
 const bot = new TelegramBot(token, { polling: true });
 const blocksToMonitor = 1;
-const botChatId = -4511482561;  //chat id of group "Chainsend Spotting Bot"
 
 db.mongoose
 	.connect(db.url)
@@ -688,8 +687,8 @@ const analyzePair = async (pairOne) => {
 		const reportMessage = await generateTokenAlertMessage(tokenDoc, pairOne, status, socials, safety);
 		let markdownMessage = reportMessage.replace(/<a href="(.*?)">(.*?)<\/a>/g, '[$2]($1)');
 
-		bot.sendPhoto("@chainsendspotbot", imageBannerPath, { caption: "" });
-		bot.sendMessage("@chainsendspotbot", markdownMessage, { parse_mode: "Markdown" });
+		bot.sendPhoto("@rocketethbots", imageBannerPath, { caption: "" });
+		bot.sendMessage("@rocketethbots", markdownMessage, { parse_mode: "Markdown" });
 
 		//update flag of LP so that this is not analyzed again
 		await MonitoringLp.findByIdAndUpdate(pairOne._id, { analyzed: true });
